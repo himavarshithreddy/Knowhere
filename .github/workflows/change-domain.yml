@@ -1,0 +1,62 @@
+name: Change Domain
+
+on:
+  workflow_dispatch:
+    inputs:
+      new_domain:
+        description: 'New Domain Name (e.g., knowhere.com)'
+        required: true
+        default: 'theknowhere.space'
+      email:
+        description: 'Email for Let''s Encrypt SSL Certificate'
+        required: true
+        default: 'gundamhimavarshith@gmail.com'
+
+jobs:
+  migrate_domain:
+    name: Migrate VPS to New Domain
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Execute Domain Migration via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+
+            DOMAIN="${{ github.event.inputs.new_domain }}"
+            EMAIL="${{ github.event.inputs.email }}"
+            ENV_FILE="/var/www/knowhere/server/.env"
+            NGINX_CONF="/etc/nginx/sites-available/knowhere"
+
+            echo "1. Updating Nginx Configuration..."
+            if [ -f "$NGINX_CONF" ]; then
+              # Replace whatever server_name is currently there with the new domain
+              sudo sed -i "s|server_name .*;|server_name $DOMAIN;|g" "$NGINX_CONF"
+              sudo nginx -t
+              sudo systemctl reload nginx
+            else
+              echo "Nginx config not found at $NGINX_CONF!"
+              exit 1
+            fi
+
+            echo "2. Requesting SSL Certificate via Certbot..."
+            # Automatically accept TOS, use provided email, and force HTTPS redirect
+            sudo certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL" --redirect
+
+            echo "3. Updating CLIENT_URL in .env..."
+            if grep -q "^CLIENT_URL=" "$ENV_FILE"; then
+              sed -i "s|^CLIENT_URL=.*|CLIENT_URL=https://$DOMAIN|" "$ENV_FILE"
+            else
+              echo "CLIENT_URL=https://$DOMAIN" >> "$ENV_FILE"
+            fi
+
+            echo "4. Reloading PM2 to apply Environment Variables..."
+            cd /var/www/knowhere
+            pm2 reload knowhere
+            pm2 save
+            
+            echo "🎉 Domain migration to $DOMAIN complete!"
