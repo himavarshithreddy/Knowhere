@@ -1,0 +1,19 @@
+{
+  "name": "knowhere",
+  "private": true,
+  "workspaces": [
+    "web",
+    "server",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "npm run build -w shared && concurrently \"npm run dev -w server\" \"npm run dev -w web\"",
+    "build": "npm run build -w shared && npm run build -w server && npm run build -w web",
+    "test": "npm run build -w shared && npm run test -w shared && npm run test -w server && npm run test -w web",
+    "start": "npm run build && npm run start -w server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /library
+Disallow: /favorites
+Disallow: /archive
+Disallow: /trash
+Disallow: /settings
+Disallow: /recover

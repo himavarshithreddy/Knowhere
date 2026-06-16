@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Knowhere dark logo">
+  <defs>
+    <style>
+      @import url("https://api.fontshare.com/v2/css?f[]=nippo@700&amp;display=swap");
+      .k {
+        font-family: "Nippo", system-ui, sans-serif;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: -0.04em;
+        fill: #e8dfc8;
+      }
+    </style>
+  </defs>
+  <rect width="512" height="512" rx="20" fill="#10141d"/>
+  <g transform="translate(151 156) scale(10)">
+    <text class="k" x="0" y="20">K</text>
+    <circle cx="17.3" cy="17.5" r="2.5" fill="#8d9d6f"/>
+  </g>
+</svg>
