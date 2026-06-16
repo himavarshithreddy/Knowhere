@@ -1,4 +1,8 @@
 <div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="web/public/knowhere-logo-dark.svg">
+    <img alt="Knowhere Logo" src="web/public/knowhere-logo-light.svg" width="120" height="120" style="margin-bottom: 20px;">
+  </picture>
   <h1>Knowhere</h1>
   <p><b>Your Private Cosmic Collection</b></p>
   <p>A unified, personal hub for your links, notes, images, and documents—docked at a single set of Coords.</p>
