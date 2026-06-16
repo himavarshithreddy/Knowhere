@@ -202,68 +202,80 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
             </button>)}
         </div>
         <div className="form-scroll">
-          {type === "link" && <div className="field"><label htmlFor="resource-url">URL</label>
-            <div className="input-action url-field">
-              <input id="resource-url" ref={urlRef} type="url" value={url} onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://example.com/article" required />
-              {previewStatus === "loading" && <span className="url-preview-status" aria-live="polite">
-                <LoaderCircle className="spin" size={16} /> Fetching title
-              </span>}
-            </div>
-          </div>}
-          {(type === "image" || type === "pdf") && <label className="file-drop">
-            <input type="file" accept={type === "pdf" ? "application/pdf" : "image/jpeg,image/png,image/webp,image/gif"}
-              onChange={(e) => selectFile(e.target.files?.[0])} />
-            {file ? <><strong>{file.name}</strong><span>{(file.size / 1024 / 1024).toFixed(1)} MB · tap to replace</span></>
-              : <><Plus /><strong>Choose {type === "pdf" ? "a PDF" : "an image"}</strong><span>Maximum 25 MB</span></>}
-          </label>}
-          {(type === "image" || type === "pdf") && file && filePreviewUrl && <div className={`file-preview preview-card${type === "pdf" ? " preview-card-pdf" : ""}`}>
-            {type === "image"
-              ? <img src={filePreviewUrl} alt={file.name} />
-              : <ResourceMediaPreview resource={{
-                id: "draft", ownerId: "", type: "pdf", title: file.name.replace(/\.pdf$/i, ""),
-                description: "", categoryId: "", fileName: file.name, favorite: false, archived: false,
-                deletedAt: null, createdAt: "", updatedAt: ""
-              }} />}
-          </div>}
-          {type === "note" && <div className="field"><label htmlFor="note-body">Note</label>
-            <textarea id="note-body" ref={noteRef} value={body} onChange={(e) => setBody(e.target.value)} rows={8}
-              placeholder="Write what you want to remember..." required /></div>}
-          {type === "link" && fetchedTitle && <div className="field fetched-title-field">
-            <span>Title</span>
-            <p className="fetched-title">{fetchedTitle}</p>
-          </div>}
-          {metadata && type === "link" && previewStatus === "ready" && <div className={`preview-card preview-card-link${linkPreviewText && isSocialPostUrl(url.trim()) ? " preview-card-social" : ""}`}>
-            <div className={`preview-card-media${linkPreviewImage ? "" : " preview-card-media-text"}`}>
-              {linkPreviewImage
-                ? <img src={linkPreviewImage} alt="" />
-                : linkPreviewText
-                  ? <p className="preview-quote">{linkPreviewText}</p>
-                  : null}
-            </div>
-            <div className="preview-card-copy">
-              <span>{metadata.siteName}</span>
-              <strong>{metadata.title}</strong>
-            </div>
-          </div>}
-          <div className="field"><label htmlFor="resource-description">Why does this belong in your archive?</label>
-            <textarea id="resource-description" value={description} onChange={(e) => setDescription(e.target.value)}
-              rows={4} placeholder="Context for future retrieval" required /></div>
-          <div className="field"><label htmlFor="resource-category">Cluster</label>
-            <select id="resource-category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
-              <option value="">Choose a cluster</option>
-              {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-            </select>
-            <div className="inline-create">
-              <input value={categoryName} onChange={(e) => setCategoryName(e.target.value)} placeholder="New cluster"
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void createCategory(); } }} />
-              <button type="button" onClick={() => void createCategory()} disabled={creatingCategory || !categoryName.trim()}>
-                {creatingCategory ? <LoaderCircle className="spin" size={16} /> : "Create"}
-              </button>
-            </div>
+          <div className="form-col-left">
+            {type === "link" && <div className="field"><label htmlFor="resource-url">URL</label>
+              <div className="input-action url-field">
+                <input id="resource-url" ref={urlRef} type="url" value={url} onChange={(e) => setUrl(e.target.value)}
+                  placeholder="https://example.com/article" required />
+              </div>
+            </div>}
+            {(type === "image" || type === "pdf") && <label className="file-drop">
+              <input type="file" accept={type === "pdf" ? "application/pdf" : "image/jpeg,image/png,image/webp,image/gif"}
+                onChange={(e) => selectFile(e.target.files?.[0])} />
+              {file ? <><strong>{file.name}</strong><span>{(file.size / 1024 / 1024).toFixed(1)} MB · tap to replace</span></>
+                : <><Plus /><strong>Choose {type === "pdf" ? "a PDF" : "an image"}</strong><span>Maximum 25 MB</span></>}
+            </label>}
+            {type === "note" && <div className="field"><label htmlFor="note-body">Note</label>
+              <textarea id="note-body" ref={noteRef} value={body} onChange={(e) => setBody(e.target.value)} rows={8}
+                placeholder="Write what you want to remember..." required /></div>}
+            
+            <div className="field"><label htmlFor="resource-description">Why does this belong in your archive?</label>
+              <textarea id="resource-description" value={description} onChange={(e) => setDescription(e.target.value)}
+                rows={4} placeholder="Context for future retrieval" required /></div>
           </div>
-          {error && <p className="form-error" role="alert">{error}</p>}
-          {uploadProgress > 0 && <div className="progress"><span style={{ width: `${uploadProgress}%` }} /></div>}
+          
+          <div className="form-col-right">
+            {(type === "image" || type === "pdf") && file && filePreviewUrl && <div className={`file-preview preview-card${type === "pdf" ? " preview-card-pdf" : ""}`}>
+              {type === "image"
+                ? <img src={filePreviewUrl} alt={file.name} />
+                : <ResourceMediaPreview resource={{
+                  id: "draft", ownerId: "", type: "pdf", title: file.name.replace(/\.pdf$/i, ""),
+                  description: "", categoryId: "", fileName: file.name, favorite: false, archived: false,
+                  deletedAt: null, createdAt: "", updatedAt: ""
+                }} />}
+            </div>}
+            
+            {type === "link" && previewStatus !== "ready" && <div className={`preview-card skeleton-card${previewStatus === "loading" ? " is-loading" : ""}`}>
+              <div className="preview-card-media" />
+              <div className="preview-card-copy">
+                <span className="skeleton-line short" style={{ marginBottom: "8px", width: "40%" }} />
+                <strong className="skeleton-line" style={{ marginBottom: "4px", width: "90%" }} />
+                <strong className="skeleton-line" style={{ width: "60%" }} />
+              </div>
+            </div>}
+            
+            {metadata && type === "link" && previewStatus === "ready" && <div className={`preview-card preview-card-link${linkPreviewText && isSocialPostUrl(url.trim()) ? " preview-card-social" : ""}`}>
+              <div className={`preview-card-media${linkPreviewImage ? "" : " preview-card-media-text"}`}>
+                {linkPreviewImage
+                  ? <img src={linkPreviewImage} alt="" />
+                  : linkPreviewText
+                    ? <p className="preview-quote">{linkPreviewText}</p>
+                    : null}
+              </div>
+              <div className="preview-card-copy">
+                <span>{metadata.siteName}</span>
+                <strong>{metadata.title}</strong>
+              </div>
+            </div>}
+            
+            <div className="field"><label htmlFor="resource-category">Cluster</label>
+              <div className="cluster-row">
+                <select id="resource-category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
+                  <option value="">Choose a cluster</option>
+                  {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+                </select>
+                <div className="inline-create">
+                  <input value={categoryName} onChange={(e) => setCategoryName(e.target.value)} placeholder="New cluster"
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void createCategory(); } }} />
+                  <button type="button" onClick={() => void createCategory()} disabled={creatingCategory || !categoryName.trim()}>
+                    {creatingCategory ? <LoaderCircle className="spin" size={16} /> : "Create"}
+                  </button>
+                </div>
+              </div>
+            </div>
+            {error && <p className="form-error" role="alert">{error}</p>}
+            {uploadProgress > 0 && <div className="progress"><span style={{ width: `${uploadProgress}%` }} /></div>}
+          </div>
         </div>
         <footer><button type="button" className="button secondary" onClick={onClose}>Cancel</button>
           <button type="submit" className="button primary" disabled={status === "saving"}>

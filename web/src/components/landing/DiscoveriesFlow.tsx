@@ -67,7 +67,7 @@ export function DiscoveriesFlow() {
         variants={sectionReveal}
         initial="hidden"
         whileInView="show"
-        viewport={{ once: true, margin: "-60px" }}
+        viewport={{ once: true, margin: "-51px" }}
       >
         <span className="section-label">What you collect</span>
         <h2 className="section-title">

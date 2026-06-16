@@ -22,6 +22,11 @@ function isLinkedInPostUrl(url: URL) {
     || url.pathname.includes("/activity-");
 }
 
+function isYouTubeUrl(url: URL) {
+  const host = url.hostname.replace(/^www\./, "");
+  return host === "youtube.com" || host === "youtu.be";
+}
+
 function htmlToText(html: string) {
   return html
     .replace(/<br\s*\/?>/gi, "\n")
@@ -62,6 +67,24 @@ async function fetchTwitterOEmbed(pageUrl: string) {
   }
 }
 
+async function fetchYouTubeOEmbed(pageUrl: string) {
+  const endpoint = `https://www.youtube.com/oembed?url=${encodeURIComponent(pageUrl)}`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+  try {
+    const response = await fetch(endpoint, {
+      signal: controller.signal,
+      headers: { accept: "application/json", "user-agent": "KnowherePreview/1.0" }
+    });
+    if (!response.ok) return null;
+    return await response.json() as { title?: string; author_name?: string; thumbnail_url?: string };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function pickPreviewImage(
   candidates: Array<string | undefined>,
   url: URL,
@@ -89,6 +112,19 @@ export async function extractMetadata(rawUrl: string) {
         siteName: "X",
         author: oembed.author_name,
         faviconUrl: `${url.origin}/favicon.ico`
+      };
+    }
+  }
+
+  if (isYouTubeUrl(url)) {
+    const oembed = await fetchYouTubeOEmbed(url.toString());
+    if (oembed?.title) {
+      return {
+        title: oembed.title,
+        siteName: "YouTube",
+        author: oembed.author_name,
+        imageUrl: oembed.thumbnail_url,
+        faviconUrl: `https://www.youtube.com/favicon.ico`
       };
     }
   }

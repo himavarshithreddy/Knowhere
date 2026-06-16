@@ -8,7 +8,7 @@ type Props = {
 const ease = [0.22, 1, 0.36, 1] as const;
 
 const dockReveal = {
-  hidden: { opacity: 0, scale: 0.92, filter: "blur(8px)" },
+  hidden: { opacity: 0, scale: 0.92, filter: "blur(6.8px)" },
   show: {
     opacity: 1,
     scale: 1,

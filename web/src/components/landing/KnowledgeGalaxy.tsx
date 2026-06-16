@@ -93,7 +93,7 @@ export function KnowledgeGalaxy() {
   const rafRef = useRef(0);
 
   const statsRef = useRef<HTMLDivElement>(null);
-  const statsInView = useInView(statsRef, { once: true, margin: "-60px" });
+  const statsInView = useInView(statsRef, { once: true, margin: "-51px" });
 
   const count0 = useCountUp(STATS[0].target, statsInView);
   const count1 = useCountUp(STATS[1].target, statsInView, 1200);
@@ -175,7 +175,7 @@ export function KnowledgeGalaxy() {
         className="section-header"
         initial={{ opacity: 0, y: 32 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-80px" }}
+        viewport={{ once: true, margin: "-68px" }}
         transition={{ duration: 0.6 }}
       >
         <span className="section-label">THE BIG PICTURE</span>
@@ -186,7 +186,7 @@ export function KnowledgeGalaxy() {
         className="galaxy-canvas-wrap"
         initial={{ opacity: 0, scale: 0.92 }}
         whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true, margin: "-60px" }}
+        viewport={{ once: true, margin: "-51px" }}
         transition={{ duration: 0.8 }}
       >
         <canvas ref={canvasRef} className="galaxy-canvas" />

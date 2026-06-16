@@ -10,7 +10,7 @@ export function CosmicFooter() {
         className="footer-cta-card"
         initial={{ opacity: 0, y: 36, scale: 0.98 }}
         whileInView={{ opacity: 1, y: 0, scale: 1 }}
-        viewport={{ once: true, margin: "-60px" }}
+        viewport={{ once: true, margin: "-51px" }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
       >
         <div className="footer-cta-glow" aria-hidden="true" />

@@ -55,7 +55,7 @@ export function MemoryNebula() {
               className="nebula-paragraph"
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
+              viewport={{ once: true, margin: '-51px' }}
               transition={{
                 duration: 0.6,
                 delay: i * 0.15,
@@ -74,7 +74,7 @@ export function MemoryNebula() {
             className="nebula-core"
             initial={{ scale: 0, opacity: 0 }}
             whileInView={{ scale: 1, opacity: 1 }}
-            viewport={{ once: true, margin: '-60px' }}
+            viewport={{ once: true, margin: '-51px' }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
           />
 
@@ -88,7 +88,7 @@ export function MemoryNebula() {
               }}
               initial={{ scale: 0.3, opacity: 0 }}
               whileInView={{ scale: 1, opacity: 1 }}
-              viewport={{ once: true, margin: '-60px' }}
+              viewport={{ once: true, margin: '-51px' }}
               transition={{
                 duration: 0.8,
                 delay: ring.delay,

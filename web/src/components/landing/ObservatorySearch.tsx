@@ -119,7 +119,7 @@ export function ObservatorySearch() {
         className="section-header"
         initial={{ opacity: 0, y: 32 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-80px" }}
+        viewport={{ once: true, margin: "-68px" }}
         transition={{ duration: 0.6 }}
       >
         <span className="section-label">FIND ANYTHING</span>
@@ -135,7 +135,7 @@ export function ObservatorySearch() {
           className="observatory-lens"
           initial={{ scale: 0.85, opacity: 0 }}
           whileInView={{ scale: 1, opacity: 1 }}
-          viewport={{ once: true, margin: "-60px" }}
+          viewport={{ once: true, margin: "-51px" }}
           transition={{ duration: 0.7, ease: "easeOut" }}
         >
           <div className="observatory-beam" />
@@ -157,7 +157,7 @@ export function ObservatorySearch() {
           className="observatory-search-bar"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-40px" }}
+          viewport={{ once: true, margin: "-34px" }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
           <input

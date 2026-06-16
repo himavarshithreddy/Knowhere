@@ -142,7 +142,7 @@ export function ClustersMap() {
                       strokeDasharray={len}
                       initial={{ strokeDashoffset: len }}
                       whileInView={{ strokeDashoffset: 0 }}
-                      viewport={{ once: true, margin: '-60px' }}
+                      viewport={{ once: true, margin: '-51px' }}
                       transition={{
                         duration: 0.3,
                         delay: ci * 0.04 + li * 0.02,
@@ -162,7 +162,7 @@ export function ClustersMap() {
                     r={s.r}
                     initial={{ opacity: 0, scale: 0 }}
                     whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true, margin: '-60px' }}
+                    viewport={{ once: true, margin: '-51px' }}
                     transition={{
                       duration: 0.2,
                       delay: ci * 0.04 + si * 0.03,
@@ -179,7 +179,7 @@ export function ClustersMap() {
                   textAnchor="middle"
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
-                  viewport={{ once: true, margin: '-60px' }}
+                  viewport={{ once: true, margin: '-51px' }}
                   transition={{ duration: 0.2, delay: ci * 0.04 + 0.1 }}
                 >
                   {c.name}

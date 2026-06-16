@@ -103,7 +103,7 @@ export function WorkspaceHeaderProfile() {
       {confirmingSignOut ? (
         <>
           <p className="profile-popover-title" id={titleId}>Sign out of Knowhere?</p>
-          <p className="enter-hint" style={{ margin: "0 0 14px", fontSize: "13px" }}>
+          <p className="enter-hint" style={{ margin: "0 0 11.9px", fontSize: "11.05px" }}>
             You will need to sign in again to access your collection.
           </p>
           <footer className="profile-popover-actions">

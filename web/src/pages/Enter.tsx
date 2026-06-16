@@ -434,14 +434,14 @@ export function Enter() {
               {user ? (
                 <div
                   className="enter-gate landing-gate"
-                  style={{ display: "grid", gap: "14px" }}
+                  style={{ display: "grid", gap: "11.9px" }}
                 >
                   <p className="enter-gate-kicker" style={{ margin: 0 }}>
                     Welcome back
                   </p>
                   <p
                     className="enter-hint"
-                    style={{ margin: 0, fontSize: "14px", lineHeight: "1.5" }}
+                    style={{ margin: 0, fontSize: "11.9px", lineHeight: "1.5" }}
                   >
                     You are signed in and ready to access your private
                     collection.
