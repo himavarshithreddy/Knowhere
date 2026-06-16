@@ -92,7 +92,6 @@ out
 # Nuxt.js build / generate output
 .nuxt
 dist
-lib
 
 # Gatsby files
 .cache/
@@ -140,5 +139,7 @@ playwright-report/
 test-results/
 web/vite.config.js
 web/vite.config.d.ts
+server/lib/
+shared/dist/
 Project Document.md
 VPS_DEPLOYMENT.md
