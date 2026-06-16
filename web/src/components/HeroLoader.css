@@ -1,0 +1,58 @@
+.hero-loader-wrapper {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: #030305;
+  z-index: 99999;
+}
+
+/* Horizontal beam that snaps and expands */
+.hero-fullscreen-flash {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #ffffff;
+  box-shadow: 
+    0 0 20px 5px #fff, 
+    0 0 60px 20px #00a2ff, 
+    0 0 100px 40px #0055ff;
+  z-index: 50;
+  transform-origin: center center;
+}
+
+/* Expanding orb */
+.hero-loader-supernova {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100px;
+  height: 100px;
+  margin-top: -50px;
+  margin-left: -50px;
+  background: radial-gradient(circle at center, #ffffff 0%, #88ccff 30%, transparent 70%);
+  filter: blur(10px);
+  border-radius: 50%;
+  z-index: 40;
+}
+
+/* The burning silhouette */
+.hero-loader-core {
+  position: relative;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Extreme glowing aura */
+  filter: drop-shadow(0 0 30px #ffffff) drop-shadow(0 0 60px #00a2ff);
+}
+
+.hero-loader-brand {
+  font-size: 140px !important;
+  color: #ffffff;
+}

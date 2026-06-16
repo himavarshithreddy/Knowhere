@@ -1,7 +1,8 @@
-import { type ReactNode } from "react";
-import { BrowserRouter, NavLink, Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { type ReactNode, useEffect, useLayoutEffect } from "react";
+import { BrowserRouter, NavLink, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { Archive, BookOpen, Heart, Settings as SettingsIcon } from "lucide-react";
 import { BrandMark } from "./components/BrandMark";
+import { AppLoader } from "./components/AppLoader";
 import { CustomCursor } from "./components/CustomCursor";
 import { Sidebar } from "./components/Sidebar";
 import { WorkspaceAmbient } from "./components/WorkspaceAmbient";
@@ -11,13 +12,15 @@ import { Enter } from "./pages/Enter";
 import { Recover } from "./pages/Recover";
 import { Library } from "./pages/Library";
 import { Settings } from "./pages/Settings";
+import { trackNavigation } from "./lib/navigation";
 import "./styles.css";
 
-function AppLoader({ message }: { message?: string }) {
-  return <div className="app-loader">
-    <BrandMark compact className="app-loader-brand" />
-    {message && <p>{message}</p>}
-  </div>;
+function LocationTracker() {
+  const location = useLocation();
+  useLayoutEffect(() => {
+    trackNavigation(location.key);
+  }, [location.key]);
+  return null;
 }
 
 function PostAuthRedirect() {
@@ -73,6 +76,7 @@ function AppRoutes() {
 
 export default function App() {
   return <BrowserRouter>
+    <LocationTracker />
     <CustomCursor />
     <AuthProvider>
       <Routes>

@@ -5,8 +5,9 @@ import {
   useState,
   type FormEvent,
 } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { BrandMark } from "../components/BrandMark";
+import { HeroLoader } from "../components/HeroLoader";
 import { EnterPageChrome } from "../components/EnterPageChrome";
 import { CosmicScene } from "../components/landing/CosmicScene";
 import { MouseGlow } from "../components/landing/MouseGlow";
@@ -24,6 +25,7 @@ import { api } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 import { usePageSeo } from "../hooks/usePageSeo";
 import { SEO } from "../lib/seo";
+import { appNavigations } from "../lib/navigation";
 import "../landing.css";
 
 /* ═══════════════════════════════
@@ -405,13 +407,25 @@ function EnterAuth({ placement = "hero" }: EnterAuthProps) {
    ═══════════════ */
 
 export function Enter() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user && !loading && appNavigations <= 1) {
+      navigate("/library");
+    }
+  }, [user, loading, navigate]);
+
   usePageSeo({
     title: SEO.home.title,
     description: SEO.home.description,
     path: "/",
     keywords: SEO.home.keywords,
   });
+
+  if ((loading || user) && appNavigations <= 1) {
+    return <HeroLoader />;
+  }
 
   const navLinks = (
     <>
