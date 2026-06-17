@@ -71,7 +71,7 @@
   right: 0;
   z-index: 50;
   border-bottom: 1px solid color-mix(in srgb, var(--line) 40%, transparent);
-  background: color-mix(in srgb, var(--bg) 60%, transparent);
+  background: color-mix(in srgb, var(--bg) 40%, transparent);
   backdrop-filter: blur(17px);
   -webkit-backdrop-filter: blur(17px);
 }
@@ -1260,8 +1260,8 @@
 
 /* ── Header ── */
 [data-theme="light"] .landing-header.enter-header {
-  background: color-mix(in srgb, var(--bg) 85%, transparent);
-  border-bottom-color: var(--line);
+  background: color-mix(in srgb, var(--bg) 40%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--line) 40%, transparent);
 }
 
 

@@ -411,12 +411,6 @@ function EnterAuth({ placement = "hero" }: EnterAuthProps) {
 export function Enter() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 100);
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     if (user && !loading && appNavigations <= 1) {
@@ -441,11 +435,9 @@ export function Enter() {
 
   return (
     <div className="landing-page">
-      {mounted && (
-        <Suspense fallback={null}>
-          <LazyCosmicScene />
-        </Suspense>
-      )}
+      <Suspense fallback={null}>
+        <LazyCosmicScene />
+      </Suspense>
       <MouseGlow />
 
       <EnterPageChrome nav={navLinks}>
@@ -483,16 +475,14 @@ export function Enter() {
           </section>
 
           {/* ── Content Sections ── */}
-          {mounted && (
-            <Suspense fallback={null}>
-              <DiscoveriesFlow />
-              <ClustersMap />
-              <MemoryNebula />
-              <ObservatorySearch />
-              <KnowledgeGalaxy />
-              <CosmicFooter />
-            </Suspense>
-          )}
+          <Suspense fallback={null}>
+            <DiscoveriesFlow />
+            <ClustersMap />
+            <MemoryNebula />
+            <ObservatorySearch />
+            <KnowledgeGalaxy />
+            <CosmicFooter />
+          </Suspense>
         </main>
       </EnterPageChrome>
     </div>

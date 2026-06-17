@@ -1,8 +1,9 @@
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { Archive, ExternalLink, FileText, Heart, Image, Link2, LoaderCircle, Lock, MoreHorizontal, NotebookPen, RotateCcw, Trash2, X } from "lucide-react";
 import type { Category, Resource } from "@knowhere/shared";
 import { ResourceMediaPreview } from "./ResourceMediaPreview";
+import { VaultPinInput } from "./VaultPinInput";
 import { isSocialPostUrl, resourcePreviewUrl } from "../lib/preview";
 import { api } from "../lib/api";
 import { relativeDate, resourceDisplayTitle } from "../lib/utils";
@@ -24,12 +25,12 @@ export function ResourceCard({ resource, category, view, mode, onOpen, onAction 
     else onOpen();
   };
 
-  const handleVerify = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (pin.length !== 4) { setPinError("PIN must be 4 digits."); return; }
+  const handleVerify = async (completedPin?: string) => {
+    const finalPin = completedPin || pin;
+    if (finalPin.length !== 4) { setPinError("PIN must be 4 digits."); return; }
     setVerifying(true); setPinError("");
     try {
-      await api.verifyVault(pin);
+      await api.verifyVault(finalPin);
       setPinPrompt(false);
       setPin("");
       onOpen();
@@ -49,21 +50,29 @@ export function ResourceCard({ resource, category, view, mode, onOpen, onAction 
     resource.type === "pdf" ? "resource-media-pdf" : ""
   ].filter(Boolean).join(" ");
 
-  if (resource.locked && pinPrompt) {
-    return <motion.article className={`resource-card ${view} vault-locked`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "24px", background: "var(--bg-card)", border: "1px solid var(--border)", position: "relative" }}>
-       <button className="icon-button" style={{ position: "absolute", top: "8px", right: "8px" }} onClick={(e) => { e.stopPropagation(); setPinPrompt(false); setPin(""); setPinError(""); }}><X size={16}/></button>
-       <Lock size={24} style={{ marginBottom: "16px", color: "var(--text-muted)" }} />
-       <h3 style={{ marginBottom: "16px", textAlign: "center" }}>Vault Locked</h3>
-       <form onSubmit={handleVerify} style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center" }} onClick={e => e.stopPropagation()}>
-         <input type="password" maxLength={4} autoFocus placeholder="PIN" value={pin} onChange={e => setPin(e.target.value)} style={{ width: "80px", textAlign: "center", letterSpacing: "4px", background: "var(--bg-input)", color: "var(--text-main)", border: "1px solid var(--border)", borderRadius: "6px", padding: "6px" }} />
-         <button type="submit" className="button primary" disabled={verifying}>{verifying ? <LoaderCircle className="spin" size={16}/> : "Unlock"}</button>
-         {pinError && <p className="form-error" style={{ margin: 0, fontSize: "12px" }}>{pinError}</p>}
-       </form>
-    </motion.article>;
-  }
+  return <>
+    <AnimatePresence>
+      {resource.locked && pinPrompt && (
+        <motion.div className="dialog-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ zIndex: 100 }} onClick={() => { setPinPrompt(false); setPin(""); setPinError(""); }}>
+          <motion.section className="detail-panel vault-modal" role="dialog" onClick={e => e.stopPropagation()} initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }}>
+            <button className="icon-button" style={{ position: "absolute", top: "12px", right: "12px" }} onClick={() => { setPinPrompt(false); setPin(""); setPinError(""); }}><X size={16}/></button>
+            <div style={{ textAlign: "center" }}>
+              <Lock size={32} style={{ margin: "0 auto 16px", color: "var(--accent)" }} />
+              <h3 style={{ margin: 0, fontSize: "20px" }}>Vault Locked</h3>
+              <p style={{ margin: "8px 0 0", fontSize: "14px", color: "var(--muted)" }}>Enter your 4-digit PIN to decrypt.</p>
+            </div>
+            
+            <VaultPinInput value={pin} onChange={setPin} onComplete={handleVerify} disabled={verifying} error={!!pinError} />
+            
+            {verifying && <div style={{ display: "flex", justifyContent: "center", width: "100%", padding: "10px" }}><LoaderCircle className="spin" size={24} color="var(--accent)"/></div>}
+            {pinError && <p className="form-error" style={{ margin: 0, textAlign: "center" }}>{pinError}</p>}
+          </motion.section>
+        </motion.div>
+      )}
+    </AnimatePresence>
 
-  return <motion.article className={`resource-card ${view}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, scale: .96 }} onClick={handleClick} tabIndex={0} onKeyDown={(e) => e.key === "Enter" && handleClick()}
+    <motion.article className={`resource-card ${view}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: .96 }} onClick={handleClick} tabIndex={0} onKeyDown={(e) => e.key === "Enter" && handleClick()}
     style={resource.locked ? { borderColor: "rgba(100, 100, 255, 0.2)", position: "relative" } : undefined}>
     
     {resource.locked && <div style={{ position: "absolute", inset: 0, zIndex: 10, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "var(--text-main)", background: "var(--bg-card)", opacity: 0.85, backdropFilter: "blur(8px)", borderRadius: "12px" }}>
@@ -97,5 +106,6 @@ export function ResourceCard({ resource, category, view, mode, onOpen, onAction 
         </>}
       </div>
     </div>
-  </motion.article>;
+  </motion.article>
+  </>;
 }

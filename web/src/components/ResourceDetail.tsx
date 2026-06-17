@@ -1,8 +1,10 @@
 import { memo, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { createPortal } from "react-dom";
 import { Archive, Download, ExternalLink, Heart, Lock, LockOpen, Trash2, X } from "lucide-react";
 import type { Category, Resource } from "@knowhere/shared";
 import { useData } from "../contexts/DataContext";
+import { VaultPinInput } from "./VaultPinInput";
 import { DetailMediaPreview } from "./ResourceMediaPreview";
 import { resourceDisplayTitle } from "../lib/utils";
 import { api } from "../lib/api";
@@ -56,11 +58,12 @@ function DetailEditor({ resource, categories, onClose }: { resource: Resource; c
     }
   };
 
-  const submitPinSetup = async () => {
-    if (setupPin.length !== 4) { setSetupPinError("PIN must be exactly 4 digits."); return; }
+  const submitPinSetup = async (completedPin?: string) => {
+    const finalPin = completedPin || setupPin;
+    if (finalPin.length !== 4) { setSetupPinError("PIN must be exactly 4 digits."); return; }
     setSetupPinError("");
     try {
-      await api.setupVault(setupPin);
+      await api.setupVault(finalPin);
       await updateResource(resource.id, { locked: true });
       setShowPinSetup(false);
       await refresh();
@@ -90,17 +93,28 @@ function DetailEditor({ resource, categories, onClose }: { resource: Resource; c
       <button onClick={handleToggleLock}>
         {resource.locked ? <><LockOpen /> Remove from Vault</> : <><Lock /> Send to Vault</>}
       </button>
-      {showPinSetup && (
-        <div style={{ background: "var(--bg-input)", padding: "12px", borderRadius: "8px", marginTop: "4px", marginBottom: "8px" }}>
-          <label style={{ display: "block", marginBottom: "8px", fontSize: "12px", color: "var(--text-muted)" }}>Create 4-digit Vault PIN</label>
-          <div style={{ display: "flex", gap: "8px" }}>
-            <input type="password" maxLength={4} value={setupPin} onChange={e => setSetupPin(e.target.value)} style={{ width: "80px", textAlign: "center", letterSpacing: "4px" }} />
-            <button className="button secondary" onClick={submitPinSetup}>Set PIN</button>
-            <button className="icon-button" onClick={() => setShowPinSetup(false)}><X size={16}/></button>
-          </div>
-          {setupPinError && <p className="form-error" style={{ margin: "8px 0 0" }}>{setupPinError}</p>}
-        </div>
+      
+      {typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {showPinSetup && (
+            <motion.div className="dialog-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ zIndex: 1000 }} onClick={() => setShowPinSetup(false)}>
+              <motion.section className="detail-panel vault-modal" role="dialog" onClick={e => e.stopPropagation()} initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }}>
+                <button className="icon-button" style={{ position: "absolute", top: "12px", right: "12px" }} onClick={() => setShowPinSetup(false)}><X size={16}/></button>
+                <div style={{ textAlign: "center" }}>
+                  <Lock size={32} style={{ margin: "0 auto 16px", color: "var(--accent)" }} />
+                  <h3 style={{ margin: 0, fontSize: "20px" }}>Create Vault PIN</h3>
+                  <p style={{ margin: "8px 0 0", fontSize: "14px", color: "var(--muted)" }}>4 digits to secure your discoveries.</p>
+                </div>
+                <VaultPinInput value={setupPin} onChange={setSetupPin} onComplete={submitPinSetup} error={!!setupPinError} />
+                <button type="button" className="button primary" onClick={() => submitPinSetup()} disabled={setupPin.length !== 4} style={{ width: "100%", height: "44px", fontSize: "15px" }}>Set PIN</button>
+                {setupPinError && <p className="form-error" style={{ margin: 0, textAlign: "center" }}>{setupPinError}</p>}
+              </motion.section>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
+
       <button onClick={() => updateResource(resource.id, { favorite: !resource.favorite })}><Heart /> {resource.favorite ? "Remove favorite" : "Favorite"}</button>
       <button onClick={() => updateResource(resource.id, { archived: !resource.archived })}><Archive /> {resource.archived ? "Unarchive" : "Archive"}</button>
       <button className="danger-text" onClick={async () => {

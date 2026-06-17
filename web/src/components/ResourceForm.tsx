@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { FileText, Image, Link2, LoaderCircle, Lock, NotebookPen, Plus, X } from "lucide-react";
+import { createPortal } from "react-dom";
+import { FileText, Image, Link2, LoaderCircle, Lock, LockOpen, NotebookPen, Plus, X } from "lucide-react";
 import { allowedUploadTypes, MAX_UPLOAD_BYTES, type ExtractedMetadata, type ResourceType } from "@knowhere/shared";
 import { api } from "../lib/api";
 import { useData } from "../contexts/DataContext";
+import { VaultPinInput } from "./VaultPinInput";
 import { BrandMark } from "./BrandMark";
 import { metadataPreviewImage, metadataPreviewText, isSocialPostUrl } from "../lib/preview";
 import { ResourceMediaPreview } from "./ResourceMediaPreview";
@@ -158,11 +160,12 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
     }
   };
 
-  const submitPinSetup = async () => {
-    if (setupPin.length !== 4) { setSetupPinError("PIN must be exactly 4 digits."); return; }
+  const submitPinSetup = async (completedPin?: string) => {
+    const finalPin = completedPin || setupPin;
+    if (finalPin.length !== 4) { setSetupPinError("PIN must be exactly 4 digits."); return; }
     setSetupPinError("");
     try {
-      await api.setupVault(setupPin);
+      await api.setupVault(finalPin);
       setLocked(true);
       setShowPinSetup(false);
       await refresh();
@@ -302,22 +305,41 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
             </div>
 
             <div className="field">
-              <label className="checkbox-label" style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", userSelect: "none" }}>
-                <input type="checkbox" checked={locked} onChange={handleLockToggle} />
-                <Lock size={14} /> Send to Vault
-              </label>
+              <button 
+                type="button" 
+                className={`button ${locked ? "primary" : "secondary"}`} 
+                onClick={() => {
+                  if (!locked && profile && !profile.hasVaultPin) {
+                    setShowPinSetup(true);
+                  } else {
+                    setLocked(!locked);
+                  }
+                }}
+                style={{ width: "100%", justifyContent: "center" }}
+              >
+                {locked ? <><Lock size={16}/> Vault Enabled</> : <><LockOpen size={16}/> Send to Vault</>}
+              </button>
             </div>
             
-            {showPinSetup && (
-              <div className="pin-setup-box" style={{ background: "var(--bg-card)", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", marginBottom: "16px" }}>
-                <label htmlFor="setup-pin" style={{ display: "block", marginBottom: "8px", fontSize: "13px" }}>Create a 4-digit Vault PIN</label>
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <input id="setup-pin" type="password" maxLength={4} placeholder="0000" value={setupPin} onChange={(e) => setSetupPin(e.target.value)} style={{ width: "80px", textAlign: "center", letterSpacing: "4px" }} />
-                  <button type="button" className="button secondary" onClick={submitPinSetup}>Set PIN</button>
-                  <button type="button" className="icon-button" onClick={() => setShowPinSetup(false)}><X size={16}/></button>
-                </div>
-                {setupPinError && <p className="form-error" style={{ margin: "8px 0 0" }}>{setupPinError}</p>}
-              </div>
+            {typeof document !== "undefined" && createPortal(
+              <AnimatePresence>
+                {showPinSetup && (
+                  <motion.div className="dialog-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ zIndex: 1000 }} onClick={() => setShowPinSetup(false)}>
+                    <motion.section className="detail-panel vault-modal" role="dialog" onClick={e => e.stopPropagation()} initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }}>
+                      <button type="button" className="icon-button" style={{ position: "absolute", top: "12px", right: "12px" }} onClick={() => setShowPinSetup(false)}><X size={16}/></button>
+                      <div style={{ textAlign: "center" }}>
+                        <Lock size={32} style={{ margin: "0 auto 16px", color: "var(--accent)" }} />
+                        <h3 style={{ margin: 0, fontSize: "20px" }}>Create Vault PIN</h3>
+                        <p style={{ margin: "8px 0 0", fontSize: "14px", color: "var(--muted)" }}>4 digits to secure your discoveries.</p>
+                      </div>
+                      <VaultPinInput value={setupPin} onChange={setSetupPin} onComplete={submitPinSetup} error={!!setupPinError} />
+                      <button type="button" className="button primary" onClick={() => submitPinSetup()} disabled={setupPin.length !== 4} style={{ width: "100%", height: "44px", fontSize: "15px" }}>Set PIN</button>
+                      {setupPinError && <p className="form-error" style={{ margin: 0, textAlign: "center" }}>{setupPinError}</p>}
+                    </motion.section>
+                  </motion.div>
+                )}
+              </AnimatePresence>,
+              document.body
             )}
 
             {error && <p className="form-error" role="alert">{error}</p>}
