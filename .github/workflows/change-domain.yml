@@ -40,7 +40,7 @@ jobs:
             
             echo "1. Resetting Nginx Configuration for new domain..."
             # Write a fresh HTTP template to wipe out any old Certbot configs that cause conflicts
-            sudo cat << 'EOF' > "$NGINX_CONF"
+            sudo tee "$NGINX_CONF" > /dev/null << 'EOF'
             server {
                 listen 80;
                 server_name DOMAIN_PLACEHOLDER;
