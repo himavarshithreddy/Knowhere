@@ -113,7 +113,7 @@ export function ClustersMap() {
       id="clusters"
     >
       <div className="section-header">
-        <span className="section-label">ORGANIZE YOUR UNIVERSE</span>
+
         <h2 className="section-title">Build your clusters</h2>
         <p className="section-subtitle">
           Group discoveries into clusters — categories that map your

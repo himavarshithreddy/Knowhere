@@ -178,7 +178,7 @@ export function KnowledgeGalaxy() {
         viewport={{ once: true, margin: "-68px" }}
         transition={{ duration: 0.6 }}
       >
-        <span className="section-label">THE BIG PICTURE</span>
+
         <h2 className="section-title">Your knowledge galaxy</h2>
       </motion.div>
 

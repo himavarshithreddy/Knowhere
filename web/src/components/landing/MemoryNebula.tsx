@@ -46,7 +46,7 @@ export function MemoryNebula() {
       <div className="nebula-content">
         {/* Text column */}
         <div className="nebula-text">
-          <span className="section-label">EVER-EXPANDING</span>
+
           <h2 className="section-title">Your universe expands</h2>
 
           {NARRATIVES.map((text, i) => (

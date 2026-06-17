@@ -67,20 +67,8 @@ export function HeroDock({ children }: Props) {
           initial="hidden"
           animate="show"
         >
-          Save links, videos, posts, articles, notes, and ideas — with the
-          context that makes them worth keeping. A mysterious archive floating
-          somewhere in the universe.
+          Save links, videos, articles, and notes with their original context. A secure archive floating in the universe.
         </motion.p>
-        <motion.div
-          className="hero-scroll-hint"
-          custom={3}
-          variants={textReveal}
-          initial="hidden"
-          animate="show"
-        >
-          <span className="hero-scroll-line" aria-hidden="true" />
-          <span className="hero-scroll-label">Scroll to explore</span>
-        </motion.div>
       </div>
 
       {/* Right column — Dock with orbit ring */}

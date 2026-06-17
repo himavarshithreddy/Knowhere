@@ -11,20 +11,20 @@ const PALETTES = {
     nebula2: "#6d7ea8",
     nebula3: "#8d9d6f",
     ring: "#e5b06a",
-    starAlpha: 0.7,
-    nebulaAlpha: 0.045,
-    ringAlpha: 0.22,
+    starAlpha: 0.75,
+    nebulaAlpha: 0.08,
+    ringAlpha: 0.20,
   },
   light: {
-    stars: "#3b5a72",
-    gold: "#b5703a",
-    nebula1: "#3b5a72",
-    nebula2: "#b5703a",
-    nebula3: "#4a6e48",
-    ring: "#3b5a72",
-    starAlpha: 0.65,
-    nebulaAlpha: 0.1,
-    ringAlpha: 0.25,
+    stars: "#1a2633",
+    gold: "#d67c2f",
+    nebula1: "#2e4f6d",
+    nebula2: "#d67c2f",
+    nebula3: "#5a704c",
+    ring: "#2e4f6d",
+    starAlpha: 1.2,
+    nebulaAlpha: 0.18,
+    ringAlpha: 0.20,
   },
 } as const;
 
@@ -37,6 +37,7 @@ function getTheme(): "dark" | "light" {
 interface Star {
   x: number;
   y: number;
+  z: number;
   r: number;
   vx: number;
   vy: number;
@@ -80,17 +81,37 @@ export function WorkspaceAmbient() {
     };
     resize();
 
+    /* ── Mouse Parallax ── */
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+    let targetMouseX = mouseX;
+    let targetMouseY = mouseY;
+    const onMouseMove = (e: MouseEvent) => {
+      targetMouseX = e.clientX;
+      targetMouseY = e.clientY;
+    };
+    window.addEventListener("mousemove", onMouseMove);
+
     /* ── Stars ── */
-    const STAR_COUNT = 100;
+    const MAX_STARS = 200;
     const stars: Star[] = [];
-    for (let i = 0; i < STAR_COUNT; i++) {
+    for (let i = 0; i < MAX_STARS; i++) {
+      const z = Math.random() * Math.random(); // Skew towards far distances
+      const depth = 0.2 + z * 0.8; // 0.2 to 1.0
+      
+      // Give ~15% of stars a significant brightness boost
+      const isBright = Math.random() > 0.85;
+      const baseAlpha = 0.15 + depth * 0.5;
+      const finalAlpha = isBright ? Math.min(1.0, baseAlpha + 0.4) : baseAlpha;
+
       stars.push({
         x: Math.random() * window.innerWidth,
         y: Math.random() * window.innerHeight,
-        r: 0.5 + Math.random() * 1.8,
-        vx: (Math.random() - 0.5) * 0.12,
-        vy: (Math.random() - 0.5) * 0.08,
-        alpha: 0.2 + Math.random() * 0.6,
+        z: depth,
+        r: 0.7 + depth * 2.2,
+        vx: (Math.random() - 0.5) * 0.15 * depth,
+        vy: (Math.random() - 0.5) * 0.1 * depth,
+        alpha: finalAlpha,
         twinkleSpeed: 0.3 + Math.random() * 1.2,
         twinklePhase: Math.random() * Math.PI * 2,
       });
@@ -164,20 +185,28 @@ export function WorkspaceAmbient() {
       const w = window.innerWidth;
       const h = window.innerHeight;
 
+      // Smooth mouse interpolation
+      mouseX += (targetMouseX - mouseX) * 0.05;
+      mouseY += (targetMouseY - mouseY) * 0.05;
+      const panX = (mouseX - w / 2) * 0.05;
+      const panY = (mouseY - h / 2) * 0.05;
+
       ctx.clearRect(0, 0, w, h);
       time += 0.016;
 
       /* Nebula blobs */
       for (const blob of nebulae) {
+        const px = blob.x - panX * 0.1; // Far depth for nebulae
+        const py = blob.y - panY * 0.1;
         const pulseAlpha =
           blob.baseAlpha *
           (0.7 + 0.3 * Math.sin(time * blob.pulseSpeed + blob.pulsePhase));
         const grad = ctx.createRadialGradient(
-          blob.x,
-          blob.y,
+          px,
+          py,
           0,
-          blob.x,
-          blob.y,
+          px,
+          py,
           blob.radius
         );
         grad.addColorStop(0, `rgba(${hexToRgb(blob.color)},${pulseAlpha})`);
@@ -185,8 +214,8 @@ export function WorkspaceAmbient() {
         grad.addColorStop(1, `rgba(${hexToRgb(blob.color)},0)`);
         ctx.fillStyle = grad;
         ctx.fillRect(
-          blob.x - blob.radius,
-          blob.y - blob.radius,
+          px - blob.radius,
+          py - blob.radius,
           blob.radius * 2,
           blob.radius * 2
         );
@@ -204,6 +233,7 @@ export function WorkspaceAmbient() {
         ry: number,
         tilt: number,
         alphaMultiplier: number,
+        zDepth: number,
         rings: Array<{
           scale: number;
           dash?: number[];
@@ -218,7 +248,7 @@ export function WorkspaceAmbient() {
         }>
       ) => {
         ctx.save();
-        ctx.translate(cx, cy);
+        ctx.translate(cx - panX * zDepth, cy - panY * zDepth);
         ctx.rotate(tilt);
 
         rings.forEach((ring) => {
@@ -270,6 +300,7 @@ export function WorkspaceAmbient() {
         baseR1 * 0.32,
         0.3,
         1.1,
+        0.3, // zDepth
         [
           {
             scale: 1.0,
@@ -299,6 +330,7 @@ export function WorkspaceAmbient() {
         baseR2 * 0.28,
         -0.4,
         0.6,
+        0.2, // zDepth
         [
           {
             scale: 1.0,
@@ -316,32 +348,37 @@ export function WorkspaceAmbient() {
       );
 
       /* Stars */
-      for (const star of stars) {
+      const currentStarCount = theme === "light" ? 180 : 120;
+      for (let i = 0; i < currentStarCount; i++) {
+        const star = stars[i];
         if (!prefersReducedMotion) {
           star.x += star.vx;
           star.y += star.vy;
 
-          // Wrap around edges
-          if (star.x < -10) star.x = w + 10;
-          if (star.x > w + 10) star.x = -10;
-          if (star.y < -10) star.y = h + 10;
-          if (star.y > h + 10) star.y = -10;
+          // Wrap around edges with a larger buffer due to parallax panning
+          if (star.x < -100) star.x = w + 100;
+          if (star.x > w + 100) star.x = -100;
+          if (star.y < -100) star.y = h + 100;
+          if (star.y > h + 100) star.y = -100;
         }
 
         const twinkle =
           0.5 + 0.5 * Math.sin(time * star.twinkleSpeed + star.twinklePhase);
         const a = star.alpha * twinkle * palette.starAlpha;
 
+        const px = star.x - panX * star.z;
+        const py = star.y - panY * star.z;
+
         ctx.beginPath();
-        ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+        ctx.arc(px, py, star.r, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(${hexToRgb(palette.stars)},${a})`;
         ctx.fill();
 
-        // Glow for bigger stars
-        if (star.r > 1.3) {
+        // Glow for bigger/closer stars
+        if (star.r > 2.0) {
           ctx.beginPath();
-          ctx.arc(star.x, star.y, star.r * 3, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${hexToRgb(palette.gold)},${a * 0.12})`;
+          ctx.arc(px, py, star.r * 2.5, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${hexToRgb(palette.gold)},${a * 0.1})`;
           ctx.fill();
         }
       }
@@ -360,6 +397,7 @@ export function WorkspaceAmbient() {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("mousemove", onMouseMove);
       observer.disconnect();
     };
   }, []);

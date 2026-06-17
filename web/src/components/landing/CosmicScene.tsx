@@ -48,11 +48,11 @@ const PALETTES = {
     cardOpacity: 0.12,
     cardEdgeOpacity: 0.28,
     coreOpacity: 0.4,
-    glowOpacity: 0.14,
+    glowOpacity: 0.08,
     dustOpacity: 0.68,
     coreLightIntensity: 1.2,
     starSizeScale: 1.4,
-    nebulaAlpha: 0.25,
+    nebulaAlpha: 0.10,
     dustSize: 0.38,
   },
 } as const;

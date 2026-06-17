@@ -122,7 +122,7 @@ export function ObservatorySearch() {
         viewport={{ once: true, margin: "-68px" }}
         transition={{ duration: 0.6 }}
       >
-        <span className="section-label">FIND ANYTHING</span>
+
         <h2 className="section-title">The Observatory</h2>
         <p className="section-subtitle">
           Search by meaning, not just keywords. Find what you saved, when you

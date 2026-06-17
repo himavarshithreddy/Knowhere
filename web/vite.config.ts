@@ -7,7 +7,7 @@ export default defineConfig({
     react() as any,
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.svg", "knowhere-logo-dark.svg", "knowhere-logo-light.svg"],
+      includeAssets: ["logo-square.svg", "favicon.svg", "knowhere-logo-dark.svg", "knowhere-logo-light.svg"],
       manifest: {
         name: "Knowhere",
         short_name: "Knowhere",
@@ -17,7 +17,7 @@ export default defineConfig({
         display: "standalone",
         icons: [
           {
-            src: "favicon.svg",
+            src: "logo-square.svg",
             sizes: "any",
             type: "image/svg+xml",
             purpose: "any maskable"
