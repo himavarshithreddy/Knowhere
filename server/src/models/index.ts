@@ -16,6 +16,7 @@ const userSchema = new Schema({
   firebaseUid: { type: String, sparse: true, index: true },
   photoURL: { type: String, default: null },
   onboardingComplete: { type: Boolean, default: false },
+  vaultPin: { type: String, sparse: true },
   preferences: { type: preferencesSchema, default: () => ({}) }
 }, { timestamps: true });
 
@@ -63,6 +64,7 @@ const resourceSchema = new Schema({
   metadata: metadataSchema,
   favorite: { type: Boolean, default: false },
   archived: { type: Boolean, default: false },
+  locked: { type: Boolean, default: false },
   deletedAt: { type: Date, default: null }
 }, { timestamps: true });
 

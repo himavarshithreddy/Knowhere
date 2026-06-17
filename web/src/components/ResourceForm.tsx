@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { FileText, Image, Link2, LoaderCircle, NotebookPen, Plus, X } from "lucide-react";
+import { FileText, Image, Link2, LoaderCircle, Lock, NotebookPen, Plus, X } from "lucide-react";
 import { allowedUploadTypes, MAX_UPLOAD_BYTES, type ExtractedMetadata, type ResourceType } from "@knowhere/shared";
 import { api } from "../lib/api";
 import { useData } from "../contexts/DataContext";
@@ -38,7 +38,7 @@ const deriveTitle = (type: ResourceType, metadata: ExtractedMetadata | undefined
 };
 
 export function ResourceForm({ open, onClose, initialCategory }: Props) {
-  const { categories, resources, profile, saveResource, addCategory, uploadProgress } = useData();
+  const { categories, resources, profile, saveResource, addCategory, uploadProgress, refresh } = useData();
   const [type, setType] = useState<ResourceType>("link");
   const [url, setUrl] = useState("");
   const [body, setBody] = useState("");
@@ -52,6 +52,10 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
   const [status, setStatus] = useState<"idle" | "saving">("idle");
   const [creatingCategory, setCreatingCategory] = useState(false);
   const [error, setError] = useState("");
+  const [locked, setLocked] = useState(false);
+  const [showPinSetup, setShowPinSetup] = useState(false);
+  const [setupPin, setSetupPin] = useState("");
+  const [setupPinError, setSetupPinError] = useState("");
   const urlRef = useRef<HTMLInputElement>(null);
   const noteRef = useRef<HTMLTextAreaElement>(null);
   const previewToken = useRef(0);
@@ -85,6 +89,7 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
       setType("link"); setUrl(""); setBody(""); setDescription("");
       setFile(null); setMetadata(undefined); setPreviewStatus("idle"); setPreviewedUrl("");
       setError(""); setStatus("idle"); setCategoryName(""); setCreatingCategory(false);
+      setLocked(false); setShowPinSetup(false); setSetupPin(""); setSetupPinError("");
       previewToken.current += 1;
     }
   }, [open]);
@@ -145,6 +150,27 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
     }
   };
 
+  const handleLockToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked && profile && !profile.hasVaultPin) {
+      setShowPinSetup(true);
+    } else {
+      setLocked(e.target.checked);
+    }
+  };
+
+  const submitPinSetup = async () => {
+    if (setupPin.length !== 4) { setSetupPinError("PIN must be exactly 4 digits."); return; }
+    setSetupPinError("");
+    try {
+      await api.setupVault(setupPin);
+      setLocked(true);
+      setShowPinSetup(false);
+      await refresh();
+    } catch (e) {
+      setSetupPinError(e instanceof Error ? e.message : "Failed to setup Vault.");
+    }
+  };
+
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (!description.trim() || !categoryId) {
@@ -176,7 +202,8 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
         noteBody: type === "note" ? body : undefined,
         file: file ?? undefined,
         metadata: metadataReady ? metadata : undefined,
-        enrichMetadataInBackground
+        enrichMetadataInBackground,
+        locked
       });
       onClose();
     } catch (e) {
@@ -230,7 +257,7 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
                 ? <img src={filePreviewUrl} alt={file.name} width="400" height="300" />
                 : <ResourceMediaPreview resource={{
                   id: "draft", ownerId: "", type: "pdf", title: file.name.replace(/\.pdf$/i, ""),
-                  description: "", categoryId: "", fileName: file.name, favorite: false, archived: false,
+                  description: "", categoryId: "", fileName: file.name, favorite: false, archived: false, locked: false,
                   deletedAt: null, createdAt: "", updatedAt: ""
                 }} />}
             </div>}
@@ -273,6 +300,26 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
                 </div>
               </div>
             </div>
+
+            <div className="field">
+              <label className="checkbox-label" style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", userSelect: "none" }}>
+                <input type="checkbox" checked={locked} onChange={handleLockToggle} />
+                <Lock size={14} /> Send to Vault
+              </label>
+            </div>
+            
+            {showPinSetup && (
+              <div className="pin-setup-box" style={{ background: "var(--bg-card)", padding: "12px", borderRadius: "8px", border: "1px solid var(--border)", marginBottom: "16px" }}>
+                <label htmlFor="setup-pin" style={{ display: "block", marginBottom: "8px", fontSize: "13px" }}>Create a 4-digit Vault PIN</label>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <input id="setup-pin" type="password" maxLength={4} placeholder="0000" value={setupPin} onChange={(e) => setSetupPin(e.target.value)} style={{ width: "80px", textAlign: "center", letterSpacing: "4px" }} />
+                  <button type="button" className="button secondary" onClick={submitPinSetup}>Set PIN</button>
+                  <button type="button" className="icon-button" onClick={() => setShowPinSetup(false)}><X size={16}/></button>
+                </div>
+                {setupPinError && <p className="form-error" style={{ margin: "8px 0 0" }}>{setupPinError}</p>}
+              </div>
+            )}
+
             {error && <p className="form-error" role="alert">{error}</p>}
             {uploadProgress > 0 && <div className="progress"><span style={{ width: `${uploadProgress}%` }} /></div>}
           </div>

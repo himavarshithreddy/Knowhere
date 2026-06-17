@@ -1,10 +1,11 @@
 import { memo, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Archive, Download, ExternalLink, Heart, Trash2, X } from "lucide-react";
+import { Archive, Download, ExternalLink, Heart, Lock, LockOpen, Trash2, X } from "lucide-react";
 import type { Category, Resource } from "@knowhere/shared";
 import { useData } from "../contexts/DataContext";
 import { DetailMediaPreview } from "./ResourceMediaPreview";
 import { resourceDisplayTitle } from "../lib/utils";
+import { api } from "../lib/api";
 
 const DetailMedia = memo(function DetailMedia({ resource }: { resource: Resource }) {
   return <DetailMediaPreview resource={resource} />;
@@ -29,9 +30,12 @@ function AttachmentActions({ resource }: { resource: Resource }) {
 }
 
 function DetailEditor({ resource, categories, onClose }: { resource: Resource; categories: Category[]; onClose: () => void }) {
-  const { updateResource } = useData();
+  const { updateResource, profile, refresh } = useData();
   const [description, setDescription] = useState(resource.description ?? "");
   const [saved, setSaved] = useState(false);
+  const [showPinSetup, setShowPinSetup] = useState(false);
+  const [setupPin, setSetupPin] = useState("");
+  const [setupPinError, setSetupPinError] = useState("");
 
   useEffect(() => {
     setDescription(resource.description ?? "");
@@ -42,6 +46,27 @@ function DetailEditor({ resource, categories, onClose }: { resource: Resource; c
     await updateResource(resource.id, { description });
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
+  };
+
+  const handleToggleLock = () => {
+    if (!resource.locked && profile && !profile.hasVaultPin) {
+      setShowPinSetup(true);
+    } else {
+      updateResource(resource.id, { locked: !resource.locked });
+    }
+  };
+
+  const submitPinSetup = async () => {
+    if (setupPin.length !== 4) { setSetupPinError("PIN must be exactly 4 digits."); return; }
+    setSetupPinError("");
+    try {
+      await api.setupVault(setupPin);
+      await updateResource(resource.id, { locked: true });
+      setShowPinSetup(false);
+      await refresh();
+    } catch (e) {
+      setSetupPinError(e instanceof Error ? e.message : "Failed to setup Vault.");
+    }
   };
 
   return <>
@@ -62,6 +87,20 @@ function DetailEditor({ resource, categories, onClose }: { resource: Resource; c
       </select>
     </label>
     <div className="detail-menu">
+      <button onClick={handleToggleLock}>
+        {resource.locked ? <><LockOpen /> Remove from Vault</> : <><Lock /> Send to Vault</>}
+      </button>
+      {showPinSetup && (
+        <div style={{ background: "var(--bg-input)", padding: "12px", borderRadius: "8px", marginTop: "4px", marginBottom: "8px" }}>
+          <label style={{ display: "block", marginBottom: "8px", fontSize: "12px", color: "var(--text-muted)" }}>Create 4-digit Vault PIN</label>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <input type="password" maxLength={4} value={setupPin} onChange={e => setSetupPin(e.target.value)} style={{ width: "80px", textAlign: "center", letterSpacing: "4px" }} />
+            <button className="button secondary" onClick={submitPinSetup}>Set PIN</button>
+            <button className="icon-button" onClick={() => setShowPinSetup(false)}><X size={16}/></button>
+          </div>
+          {setupPinError && <p className="form-error" style={{ margin: "8px 0 0" }}>{setupPinError}</p>}
+        </div>
+      )}
       <button onClick={() => updateResource(resource.id, { favorite: !resource.favorite })}><Heart /> {resource.favorite ? "Remove favorite" : "Favorite"}</button>
       <button onClick={() => updateResource(resource.id, { archived: !resource.archived })}><Archive /> {resource.archived ? "Unarchive" : "Archive"}</button>
       <button className="danger-text" onClick={async () => {

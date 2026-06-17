@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Download, GripVertical, Moon, Plus, Trash2, UserRound } from "lucide-react";
+import { Download, GripVertical, Lock, Moon, Plus, Trash2, UserRound } from "lucide-react";
 import { api } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 import { useData } from "../contexts/DataContext";
@@ -15,7 +15,7 @@ import { SEO } from "../lib/seo";
 export function Settings() {
   const { user } = useAuth();
   const { theme } = useTheme();
-  const { categories, resources, addCategory, renameCategory, reorderCategories, removeCategory } = useData();
+  const { profile, categories, resources, addCategory, renameCategory, reorderCategories, removeCategory, refresh } = useData();
   const [newCategory, setNewCategory] = useState("");
   const [message, setMessage] = useState("");
   const [logoPreviewOpen, setLogoPreviewOpen] = useState(false);
@@ -107,6 +107,23 @@ export function Settings() {
       <div className="setting-row"><div><strong>{theme === "dark" ? "Dark mode" : "Light mode"}</strong><span>Use the toggle in the page header to switch themes.</span></div></div>
       <div className="setting-row"><div><strong>Logo preview</strong><span>Full-screen mark for capturing a PNG favicon.</span></div>
         <button type="button" className="button secondary" onClick={() => setLogoPreviewOpen(true)}>Preview logo</button></div>
+    </section>
+    <section className="settings-section"><div className="settings-heading"><Lock /><div><h2>Vault</h2><p>Manage your classified discoveries.</p></div></div>
+      <div className="setting-row"><div><strong>Reset Vault PIN</strong><span>Permanently deletes all your locked discoveries. This cannot be undone.</span></div>
+        <button className="button danger" disabled={!profile?.hasVaultPin} onClick={() => {
+          setConfirmDialog({
+            open: true,
+            title: "Reset Vault PIN",
+            description: "Are you absolutely sure? This will PERMANENTLY DELETE all your locked discoveries and reset your Vault PIN. This cannot be undone.",
+            confirmLabel: "Reset Vault",
+            danger: true,
+            onConfirm: async () => {
+              setConfirmDialog(p => ({ ...p, open: false }));
+              await api.resetVault();
+              await refresh();
+            }
+          });
+        }}>Reset PIN</button></div>
     </section>
     <section className="settings-section"><div className="settings-heading"><Download /><div><h2>Export</h2><p>Download a portable copy of your full collection.</p></div></div>
       <div className="setting-row"><div><strong>{resources.length} discoveries</strong><span>Includes clusters, metadata, notes, and file references.</span></div>

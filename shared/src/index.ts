@@ -29,6 +29,7 @@ export const resourceSchema = z.object({
   metadata: metadataSchema.optional(),
   favorite: z.boolean().default(false),
   archived: z.boolean().default(false),
+  locked: z.boolean().default(false),
   deletedAt: z.string().nullable().default(null),
   createdAt: z.string(),
   updatedAt: z.string()
@@ -56,6 +57,7 @@ export const userProfileSchema = z.object({
   email: z.string().email(),
   photoURL: z.string().url().nullable(),
   onboardingComplete: z.boolean(),
+  hasVaultPin: z.boolean().default(false),
   preferences: preferencesSchema,
   createdAt: z.string(),
   updatedAt: z.string()

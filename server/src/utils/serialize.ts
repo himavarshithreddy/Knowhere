@@ -14,6 +14,7 @@ export const userToProfile = (user: UserDoc): UserProfile => ({
   email: user.email,
   photoURL: user.photoURL ?? null,
   onboardingComplete: user.onboardingComplete,
+  hasVaultPin: Boolean(user.vaultPin),
   preferences: {
     density: (user.preferences?.density ?? "comfortable") as UserProfile["preferences"]["density"],
     view: (user.preferences?.view ?? "grid") as UserProfile["preferences"]["view"],
@@ -57,6 +58,7 @@ export const resourceToApi = (doc: ResourceDoc): Resource => ({
   } : undefined,
   favorite: doc.favorite,
   archived: doc.archived,
+  locked: doc.locked,
   deletedAt: toIso(doc.deletedAt),
   createdAt: toIso(doc.createdAt)!,
   updatedAt: toIso(doc.updatedAt)!

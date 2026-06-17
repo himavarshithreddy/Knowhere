@@ -1,18 +1,15 @@
 import { type ReactNode, useEffect, useLayoutEffect, Suspense, lazy } from "react";
 import { BrowserRouter, NavLink, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
-import { Archive, BookOpen, Heart, Settings as SettingsIcon } from "lucide-react";
-import { BrandMark } from "./components/BrandMark";
+import { Archive as ArchiveIcon, BookOpen as BookOpenIcon, Heart as HeartIcon, Settings as SettingsGearIcon } from "lucide-react";
 import { AppLoader } from "./components/AppLoader";
-import { CustomCursor } from "./components/CustomCursor";
-import { Sidebar } from "./components/Sidebar";
-import { WorkspaceAmbient } from "./components/WorkspaceAmbient";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { DataProvider, useData } from "./contexts/DataContext";
 import { useToast } from "./contexts/ToastContext";
 import { trackNavigation } from "./lib/navigation";
 import { registerSW } from "virtual:pwa-register";
 import "./styles.css";
-import { Enter } from "./pages/Enter";
+
+const Enter = lazy(() => import("./pages/Enter").then(m => ({ default: m.Enter })));
 
 const Recover = lazy(() => import("./pages/Recover").then(m => ({ default: m.Recover })));
 const Library = lazy(() => import("./pages/Library").then(m => ({ default: m.Library })));
@@ -76,15 +73,14 @@ function Shell() {
   if (loading || !profile) return <AppLoader message="Docking at Knowhere..." />;
 
   return <div className="app-shell">
-    <WorkspaceAmbient />
-    <Sidebar />
+    <Suspense fallback={null}>
+      <ShellAmbient />
+    </Suspense>
+    <Suspense fallback={null}>
+      <ShellSidebar />
+    </Suspense>
     <Outlet />
-    <nav className="mobile-nav">
-      <NavLink to="/library"><BookOpen /><span>Discoveries</span></NavLink>
-      <NavLink to="/favorites"><Heart /><span>Favorites</span></NavLink>
-      <NavLink to="/archive"><Archive /><span>Archive</span></NavLink>
-      <NavLink to="/settings"><SettingsIcon /><span>Settings</span></NavLink>
-    </nav>
+    <MobileNav />
   </div>;
 }
 
@@ -105,21 +101,42 @@ function AppRoutes() {
   </DataProvider>;
 }
 
+const ShellAmbient = lazy(() => import("./components/WorkspaceAmbient").then(m => ({ default: m.WorkspaceAmbient })));
+const ShellSidebar = lazy(() => import("./components/Sidebar").then(m => ({ default: m.Sidebar })));
+const CustomCursor = lazy(() => import("./components/CustomCursor").then(m => ({ default: m.CustomCursor })));
+
+function MobileNav() {
+  return <nav className="mobile-nav">
+    <NavLink to="/library"><BookOpenIcon /><span>Discoveries</span></NavLink>
+    <NavLink to="/favorites"><HeartIcon /><span>Favorites</span></NavLink>
+    <NavLink to="/archive"><ArchiveIcon /><span>Archive</span></NavLink>
+    <NavLink to="/settings"><SettingsGearIcon /><span>Settings</span></NavLink>
+  </nav>;
+}
+
 export default function App() {
   return <BrowserRouter>
     <LocationTracker />
     <PwaUpdater />
-    <CustomCursor />
+    <Suspense fallback={null}><CustomCursor /></Suspense>
     <AuthProvider>
-      <Suspense fallback={<AppLoader />}>
-        <Routes>
-          <Route path="/" element={<Enter />} />
-          <Route path="/recover" element={<Recover />} />
-          <Route path="/login" element={<Navigate to="/" replace />} />
-          <Route path="/welcome" element={<Navigate to="/library" replace />} />
-          <Route path="/*" element={<RequireAuth><AppRoutes /></RequireAuth>} />
-        </Routes>
-      </Suspense>
+      <Routes>
+        <Route path="/" element={
+          <Suspense fallback={null}>
+            <Enter />
+          </Suspense>
+        } />
+        <Route path="/*" element={
+          <Suspense fallback={<AppLoader />}>
+            <Routes>
+              <Route path="/recover" element={<Recover />} />
+              <Route path="/login" element={<Navigate to="/" replace />} />
+              <Route path="/welcome" element={<Navigate to="/library" replace />} />
+              <Route path="/*" element={<RequireAuth><AppRoutes /></RequireAuth>} />
+            </Routes>
+          </Suspense>
+        } />
+      </Routes>
     </AuthProvider>
   </BrowserRouter>;
 }

@@ -6,7 +6,7 @@ import { useAuth } from "./AuthContext";
 type ResourceInput = {
   type: Resource["type"]; title?: string; description: string; categoryId: string;
   url?: string; noteBody?: string; file?: File; metadata?: Resource["metadata"];
-  enrichMetadataInBackground?: boolean;
+  enrichMetadataInBackground?: boolean; locked?: boolean;
 };
 type DataState = {
   profile: UserProfile | null; categories: Category[]; resources: Resource[];
@@ -74,7 +74,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       categoryId: input.categoryId,
       url: input.url,
       noteBody: input.noteBody,
-      metadata: input.metadata
+      metadata: input.metadata,
+      locked: input.locked
     });
     try {
       let saved = created;

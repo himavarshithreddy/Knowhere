@@ -27,7 +27,7 @@ resourcesRouter.get("/", async (req, res) => {
 });
 
 resourcesRouter.post("/", async (req, res) => {
-  const { type, title, description, categoryId, url, noteBody, metadata } = req.body;
+  const { type, title, description, categoryId, url, noteBody, metadata, locked } = req.body;
   if (!type || !description?.trim() || !categoryId) {
     return res.status(400).json({ error: "Add a description and category." });
   }
@@ -50,6 +50,7 @@ resourcesRouter.post("/", async (req, res) => {
     metadata: metadata ?? undefined,
     favorite: false,
     archived: false,
+    locked: locked === true,
     deletedAt: null
   });
 
@@ -90,7 +91,7 @@ resourcesRouter.patch("/:id", async (req, res) => {
   const resource = await Resource.findOne({ _id: req.params.id, userId: req.auth!.uid });
   if (!resource) return res.status(404).json({ error: "Resource not found." });
 
-  const allowed = ["title", "description", "categoryId", "url", "noteBody", "metadata", "favorite", "archived", "deletedAt"] as const;
+  const allowed = ["title", "description", "categoryId", "url", "noteBody", "metadata", "favorite", "archived", "locked", "deletedAt"] as const;
   for (const key of allowed) {
     if (req.body[key] !== undefined) {
       if (key === "deletedAt") {
@@ -103,6 +104,7 @@ resourcesRouter.patch("/:id", async (req, res) => {
       else if (key === "metadata") resource.metadata = req.body.metadata;
       else if (key === "favorite") resource.favorite = req.body.favorite;
       else if (key === "archived") resource.archived = req.body.archived;
+      else if (key === "locked") resource.locked = req.body.locked;
     }
   }
 

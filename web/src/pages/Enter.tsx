@@ -9,7 +9,6 @@ import {
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BrandMark } from "../components/BrandMark";
-import { HeroLoader } from "../components/HeroLoader";
 import { EnterPageChrome } from "../components/EnterPageChrome";
 const LazyCosmicScene = lazy(() => import("../components/landing/CosmicScene").then(m => ({ default: m.CosmicScene })));
 const DiscoveriesFlow = lazy(() => import("../components/landing/DiscoveriesFlow").then(m => ({ default: m.DiscoveriesFlow })));
@@ -412,6 +411,12 @@ function EnterAuth({ placement = "hero" }: EnterAuthProps) {
 export function Enter() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (user && !loading && appNavigations <= 1) {
@@ -426,10 +431,6 @@ export function Enter() {
     keywords: SEO.home.keywords,
   });
 
-  if ((loading || user) && appNavigations <= 1) {
-    return <HeroLoader />;
-  }
-
   const navLinks = (
     <>
       <a href="#discoveries">Discover</a>
@@ -440,9 +441,11 @@ export function Enter() {
 
   return (
     <div className="landing-page">
-      <Suspense fallback={null}>
-        <LazyCosmicScene />
-      </Suspense>
+      {mounted && (
+        <Suspense fallback={null}>
+          <LazyCosmicScene />
+        </Suspense>
+      )}
       <MouseGlow />
 
       <EnterPageChrome nav={navLinks}>
@@ -480,14 +483,16 @@ export function Enter() {
           </section>
 
           {/* ── Content Sections ── */}
-          <Suspense fallback={null}>
-            <DiscoveriesFlow />
-            <ClustersMap />
-            <MemoryNebula />
-            <ObservatorySearch />
-            <KnowledgeGalaxy />
-            <CosmicFooter />
-          </Suspense>
+          {mounted && (
+            <Suspense fallback={null}>
+              <DiscoveriesFlow />
+              <ClustersMap />
+              <MemoryNebula />
+              <ObservatorySearch />
+              <KnowledgeGalaxy />
+              <CosmicFooter />
+            </Suspense>
+          )}
         </main>
       </EnterPageChrome>
     </div>

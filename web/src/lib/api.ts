@@ -18,6 +18,7 @@ type ResourceInput = {
   url?: string;
   noteBody?: string;
   metadata?: Resource["metadata"];
+  locked?: boolean;
 };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -79,6 +80,10 @@ export const api = {
   extractMetadata: (url: string) => request<ExtractedMetadata>("/api/metadata/extract", { method: "POST", body: JSON.stringify({ url }) }),
   exportLibrary: (format: "json" | "csv") => request<{ format: string; content: string }>(`/api/export?format=${format}`),
   deleteAccount: () => request<{ ok: boolean }>("/api/account", { method: "DELETE" }),
+
+  setupVault: (pin: string) => request<{ ok: boolean }>("/api/vault/setup", { method: "POST", body: JSON.stringify({ pin }) }),
+  verifyVault: (pin: string) => request<{ ok: boolean }>("/api/vault/verify", { method: "POST", body: JSON.stringify({ pin }) }),
+  resetVault: () => request<{ ok: boolean }>("/api/vault/reset", { method: "POST" }),
 
   uploadFile(resourceId: string, file: File, onProgress: (value: number) => void) {
     return new Promise<Resource>((resolve, reject) => {
