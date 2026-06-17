@@ -39,10 +39,7 @@ function PwaUpdater() {
         });
       },
       onOfflineReady() {
-        addToast({
-          message: "App ready to work offline",
-          type: "success",
-        });
+        // Silently ready for offline
       },
     });
   }, [addToast]);
