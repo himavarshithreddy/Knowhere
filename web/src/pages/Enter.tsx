@@ -11,17 +11,16 @@ import { Link, useNavigate } from "react-router-dom";
 import { BrandMark } from "../components/BrandMark";
 import { HeroLoader } from "../components/HeroLoader";
 import { EnterPageChrome } from "../components/EnterPageChrome";
-const LazyCosmicScene = lazy(() =>
-  import("../components/landing/CosmicScene").then(m => ({ default: m.CosmicScene }))
-);
+const LazyCosmicScene = lazy(() => import("../components/landing/CosmicScene").then(m => ({ default: m.CosmicScene })));
+const DiscoveriesFlow = lazy(() => import("../components/landing/DiscoveriesFlow").then(m => ({ default: m.DiscoveriesFlow })));
+const ClustersMap = lazy(() => import("../components/landing/ClustersMap").then(m => ({ default: m.ClustersMap })));
+const MemoryNebula = lazy(() => import("../components/landing/MemoryNebula").then(m => ({ default: m.MemoryNebula })));
+const ObservatorySearch = lazy(() => import("../components/landing/ObservatorySearch").then(m => ({ default: m.ObservatorySearch })));
+const KnowledgeGalaxy = lazy(() => import("../components/landing/KnowledgeGalaxy").then(m => ({ default: m.KnowledgeGalaxy })));
+const CosmicFooter = lazy(() => import("../components/landing/CosmicFooter").then(m => ({ default: m.CosmicFooter })));
+
 import { MouseGlow } from "../components/landing/MouseGlow";
 import { HeroDock } from "../components/landing/HeroDock";
-import { DiscoveriesFlow } from "../components/landing/DiscoveriesFlow";
-import { ClustersMap } from "../components/landing/ClustersMap";
-import { MemoryNebula } from "../components/landing/MemoryNebula";
-import { ObservatorySearch } from "../components/landing/ObservatorySearch";
-import { KnowledgeGalaxy } from "../components/landing/KnowledgeGalaxy";
-import { CosmicFooter } from "../components/landing/CosmicFooter";
 import { ArrowRight, LoaderCircle, Mail } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatCoordsInput } from "@knowhere/shared";
@@ -481,12 +480,14 @@ export function Enter() {
           </section>
 
           {/* ── Content Sections ── */}
-          <DiscoveriesFlow />
-          <ClustersMap />
-          <MemoryNebula />
-          <ObservatorySearch />
-          <KnowledgeGalaxy />
-          <CosmicFooter />
+          <Suspense fallback={null}>
+            <DiscoveriesFlow />
+            <ClustersMap />
+            <MemoryNebula />
+            <ObservatorySearch />
+            <KnowledgeGalaxy />
+            <CosmicFooter />
+          </Suspense>
         </main>
       </EnterPageChrome>
     </div>

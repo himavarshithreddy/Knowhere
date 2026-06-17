@@ -45,6 +45,7 @@ function generateStars(): Star[] {
   return stars;
 }
 
+
 const STARS = generateStars();
 
 function getTheme(): "dark" | "light" {

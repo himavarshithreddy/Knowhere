@@ -12,8 +12,8 @@ import { useToast } from "./contexts/ToastContext";
 import { trackNavigation } from "./lib/navigation";
 import { registerSW } from "virtual:pwa-register";
 import "./styles.css";
+import { Enter } from "./pages/Enter";
 
-const Enter = lazy(() => import("./pages/Enter").then(m => ({ default: m.Enter })));
 const Recover = lazy(() => import("./pages/Recover").then(m => ({ default: m.Recover })));
 const Library = lazy(() => import("./pages/Library").then(m => ({ default: m.Library })));
 const Settings = lazy(() => import("./pages/Settings").then(m => ({ default: m.Settings })));
