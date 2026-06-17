@@ -190,7 +190,7 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <motion.form className="resource-form" onSubmit={submit} role="dialog" aria-modal="true" aria-labelledby="save-title"
         initial={{ opacity: 0, y: 32, scale: .98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 24 }}
-        transition={{ duration: .2 }}>
+        transition={{ duration: .15 }}>
         <header>
           <div><p className="eyebrow">New entry</p><h2 id="save-title">Save to <BrandMark /></h2></div>
           <button type="button" className="icon-button" onClick={onClose} aria-label="Close"><X /></button>

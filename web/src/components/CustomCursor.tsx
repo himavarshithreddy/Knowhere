@@ -22,7 +22,9 @@ export function CustomCursor() {
   }, []);
 
   useEffect(() => {
-    const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    const isTouchDevice =
+      !window.matchMedia("(pointer: fine)").matches ||
+      ("ontouchstart" in window && navigator.maxTouchPoints > 0 && window.innerWidth < 1024);
     if (isTouchDevice) return;
 
     const dot = dotRef.current;

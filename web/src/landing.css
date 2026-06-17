@@ -37,7 +37,7 @@
    ─────────────────────────── */
 .landing-page {
   position: relative;
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bg);
   overflow-x: hidden;
 }
@@ -92,7 +92,7 @@
    ════════════════════════ */
 .landing-hero {
   position: relative;
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1128,7 +1128,7 @@
 @media (max-width: 595px) {
   .landing-hero {
     min-height: auto;
-    padding: 85px 18.7px 40.8px;
+    padding: 72px 16px 36px;
   }
 
   .hero-dock-wrap {
@@ -1140,16 +1140,16 @@
   }
 
   .hero-dock-inner {
-    padding: 18.7px 15.3px 17px;
+    padding: 18px 15px 16px;
   }
 
   .hero-title {
-    font-size: clamp(23.8px, 6.8vw, 30.6px);
+    font-size: clamp(26px, 7vw, 32px);
   }
 
   .hero-subtitle {
-    font-size: 11.9px;
-    margin-bottom: 20.4px;
+    font-size: 12.5px;
+    margin-bottom: 18px;
   }
 
   .hero-eyebrow {
@@ -1157,10 +1157,30 @@
   }
 
   .landing-section {
-    padding: clamp(40.8px, 6.8vh, 68px) 18.7px;
+    padding: clamp(40px, 7vh, 64px) 16px;
   }
 
+  /* Nav links hidden on mobile — reachable by scrolling */
+  .enter-nav {
+    display: none;
+  }
 
+  /* Touch-friendly coords input */
+  .landing-gate .coords-input {
+    min-height: 48px;
+    font-size: clamp(22px, 5.5vw, 28px);
+  }
+
+  /* Touch-friendly chips — 44px minimum */
+  .landing-gate .coords-chip {
+    min-height: 44px;
+    font-size: 12px;
+  }
+
+  /* Touch-friendly Google button */
+  .landing-gate .google-button {
+    min-height: 48px;
+  }
 
   .nebula-content {
     grid-template-columns: 1fr;
@@ -1189,17 +1209,17 @@
   }
 
   .footer-cta-title {
-    font-size: clamp(23.8px, 6.8vw, 34px);
+    font-size: clamp(24px, 7vw, 34px);
   }
 
   .footer-cta-buttons {
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
   }
 
   .footer-btn {
     width: 100%;
-    max-width: 238px;
+    min-height: 48px;
   }
 
   .clusters-map {
@@ -1567,4 +1587,13 @@
 }
 [data-theme="light"] .hero-eyebrow {
   color: var(--brand);
+}
+
+/* ── Mobile Performance Overrides ── */
+@media (max-width: 768px) {
+  /* Disable expensive blur filters on mobile to improve scrolling FPS and battery life */
+  * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 }

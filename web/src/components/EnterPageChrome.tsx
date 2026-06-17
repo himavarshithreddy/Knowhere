@@ -1,4 +1,5 @@
 import type { ReactNode, MouseEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { BrandMark } from "./BrandMark";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -8,9 +9,10 @@ type EnterPageChromeProps = {
 };
 
 export function EnterPageChrome({ children, nav }: EnterPageChromeProps) {
+  const navigate = useNavigate();
   const refreshHome = (event: MouseEvent) => {
     event.preventDefault();
-    window.location.href = "/";
+    navigate("/");
   };
 
   return (

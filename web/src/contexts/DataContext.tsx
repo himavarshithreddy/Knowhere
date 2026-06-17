@@ -65,7 +65,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     refresh();
   }, [user, refresh]);
 
-  const saveResource = async (input: ResourceInput) => {
+  const saveResource = useCallback(async (input: ResourceInput) => {
     if (!user) return;
     const created = await api.createResource({
       type: input.type,
@@ -101,7 +101,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     } finally {
       setUploadProgress(0);
     }
-  };
+  }, [user, refresh]);
 
   const value = useMemo<DataState>(() => ({
     profile, categories, resources, loading, error, uploadProgress, refresh, saveResource,
@@ -138,7 +138,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const next = await api.updateProfile({ onboardingComplete: true });
       setProfile(next);
     }
-  }), [profile, categories, resources, loading, error, uploadProgress, refresh, user]);
+  }), [profile, categories, resources, loading, error, uploadProgress, refresh, saveResource, user]);
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }

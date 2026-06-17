@@ -1,4 +1,6 @@
 import {
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
   useRef,
@@ -9,7 +11,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { BrandMark } from "../components/BrandMark";
 import { HeroLoader } from "../components/HeroLoader";
 import { EnterPageChrome } from "../components/EnterPageChrome";
-import { CosmicScene } from "../components/landing/CosmicScene";
+const LazyCosmicScene = lazy(() =>
+  import("../components/landing/CosmicScene").then(m => ({ default: m.CosmicScene }))
+);
 import { MouseGlow } from "../components/landing/MouseGlow";
 import { HeroDock } from "../components/landing/HeroDock";
 import { DiscoveriesFlow } from "../components/landing/DiscoveriesFlow";
@@ -437,11 +441,13 @@ export function Enter() {
 
   return (
     <div className="landing-page">
-      <CosmicScene />
+      <Suspense fallback={null}>
+        <LazyCosmicScene />
+      </Suspense>
       <MouseGlow />
 
       <EnterPageChrome nav={navLinks}>
-        <main className="landing-main">
+        <main id="main-content" className="landing-main">
           {/* ── Hero with Dock ── */}
           <section className="landing-hero" id="enter">
             <HeroDock>

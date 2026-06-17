@@ -2,6 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import compression from "compression";
 import express from "express";
 import { assertAuthConfig, config } from "./config.js";
 import { connectDb } from "./db.js";
@@ -25,6 +26,7 @@ async function main() {
   await connectDb();
 
   const app = express();
+  app.use(compression() as never);
   app.use(cors({ origin: config.clientUrl, credentials: true }));
   app.use(express.json({ limit: "2mb" }));
   app.use(cookieParser() as never);

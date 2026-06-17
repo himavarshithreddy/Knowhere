@@ -12,7 +12,6 @@
   "dependencies": {
     "@hookform/resolvers": "^4.1.0",
     "@knowhere/shared": "1.0.0",
-    "@tanstack/react-query": "^5.66.8",
     "@types/three": "^0.184.1",
     "firebase": "^12.14.0",
     "framer-motion": "^12.4.3",

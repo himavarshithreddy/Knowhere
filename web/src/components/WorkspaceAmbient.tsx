@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /* ═══════════════════════════════════
    Theme-aware palettes (matches CosmicScene)
@@ -58,8 +58,16 @@ interface NebulaBlob {
 
 export function WorkspaceAmbient() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
 
   useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (isMobile) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -182,6 +190,9 @@ export function WorkspaceAmbient() {
     /* ── Animation loop ── */
     let time = 0;
     const draw = () => {
+      raf = requestAnimationFrame(draw);
+      if (document.hidden) return;
+
       const w = window.innerWidth;
       const h = window.innerHeight;
 
@@ -382,8 +393,6 @@ export function WorkspaceAmbient() {
           ctx.fill();
         }
       }
-
-      raf = requestAnimationFrame(draw);
     };
 
     raf = requestAnimationFrame(draw);
@@ -400,7 +409,11 @@ export function WorkspaceAmbient() {
       window.removeEventListener("mousemove", onMouseMove);
       observer.disconnect();
     };
-  }, []);
+  }, [isMobile]);
+
+  if (isMobile) {
+    return <div className="workspace-ambient-mobile" aria-hidden="true" />;
+  }
 
   return (
     <canvas

@@ -165,6 +165,7 @@ export function ObservatorySearch() {
             value={typed}
             readOnly
             placeholder="Search your universe…"
+            aria-label="Example search input simulation"
           />
         </motion.div>
 

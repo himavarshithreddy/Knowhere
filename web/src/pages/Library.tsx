@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { AlignLeft, Grid2X2, List, Plus, Search, SlidersHorizontal } from "lucide-react";
 import type { Category, Resource } from "@knowhere/shared";
 import { useData } from "../contexts/DataContext";
+import { useToast } from "../contexts/ToastContext";
 import { searchResources, resourceDisplayTitle } from "../lib/utils";
 import { resourcePreviewUrl } from "../lib/preview";
 import { CategoryCard } from "../components/CategoryCard";
@@ -21,10 +22,31 @@ type BrowseMode = "categories" | "resources";
 
 export function Library({ mode = "library" }: { mode?: "library" | "favorites" | "archive" | "trash" }) {
   const { profile, resources, categories, loading, error, updateResource, permanentlyDelete, updatePreferences } = useData();
+  const { addToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [sort, setSort] = useState("newest");
+  const [limit, setLimit] = useState(50);
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setLimit(50);
+  }, [category, query, sort, mode]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setLimit((prev) => prev + 50);
+        }
+      },
+      { rootMargin: "400px" }
+    );
+    const target = observerTarget.current;
+    if (target) observer.observe(target);
+    return () => observer.disconnect();
+  }, [observerTarget.current]);
 
   const isLibrary = mode === "library";
   const isSearching = query.trim().length > 0;
@@ -179,7 +201,17 @@ export function Library({ mode = "library" }: { mode?: "library" | "favorites" |
   const action = async (resource: Resource, action: string) => {
     if (action === "favorite") await updateResource(resource.id, { favorite: !resource.favorite });
     if (action === "archive") await updateResource(resource.id, { archived: !resource.archived });
-    if (action === "trash") await updateResource(resource.id, { deletedAt: new Date().toISOString() });
+    if (action === "trash") {
+      await updateResource(resource.id, { deletedAt: new Date().toISOString() });
+      addToast({
+        message: "Moved to trash.",
+        type: "info",
+        action: {
+          label: "Undo",
+          onClick: () => updateResource(resource.id, { deletedAt: null })
+        }
+      });
+    }
     if (action === "restore") await updateResource(resource.id, { deletedAt: null });
     if (action === "permanent" && confirm("Permanently delete this resource? This cannot be undone.")) await permanentlyDelete(resource);
   };
@@ -196,7 +228,7 @@ export function Library({ mode = "library" }: { mode?: "library" | "favorites" |
     robots: seo.robots
   });
 
-  return <main className="workspace">
+  return <main id="main-content" className="workspace">
     <header className="workspace-header">
       <div className="workspace-header-main">
         <WorkspaceHeaderMeta
@@ -222,7 +254,7 @@ export function Library({ mode = "library" }: { mode?: "library" | "favorites" |
       <div className="toolbar-cluster toolbar-cluster-primary">
         <label className="search-box toolbar-search">
           <Search />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Scan for signals..." />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Scan for signals..." aria-label="Search signals" />
         </label>
         {mode !== "trash" && <button type="button" className="button primary new-resource" onClick={openForm}>
           <span className="new-resource-icon" aria-hidden="true"><Plus size={18} strokeWidth={2.25} /></span>
@@ -286,6 +318,9 @@ export function Library({ mode = "library" }: { mode?: "library" | "favorites" |
         </div>
       </div>
     </div>
+    <div className="sr-only" aria-live="polite" role="status" style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0,0,0,0)", border: 0 }}>
+      {loading ? "Loading resources..." : showingCategories ? `${visibleCategories.length} clusters found.` : `${visible.length} signals found.`}
+    </div>
     {error && <div className="error-banner">{error}</div>}
     {loading ? <div className={`resource-grid ${resourceView}`}>{ [1, 2, 3, 4, 5, 6].map((i) => <div className="skeleton-card" key={i} />) }</div>
       : showingCategories ? (
@@ -298,11 +333,14 @@ export function Library({ mode = "library" }: { mode?: "library" | "favorites" |
           : <div className="empty-state"><div className="empty-mark"><BrandMark compact /></div>
             <h2>No clusters charted</h2>
             <p>Create a cluster in Settings, then log your first discovery.</p></div>
-      ) : visible.length ? <div className={`resource-grid ${resourceView}`}><AnimatePresence>
-        {visible.map((resource) => <ResourceCard key={resource.id} resource={resource}
-          category={categories.find((item) => item.id === resource.categoryId)} view={resourceView} mode={mode}
-          onOpen={() => mode !== "trash" && openDetail(resource.id)} onAction={(next) => action(resource, next)} />)}
-      </AnimatePresence></div>
+      ) : visible.length ? <>
+        <div className={`resource-grid ${resourceView}`}><AnimatePresence>
+          {visible.slice(0, limit).map((resource) => <ResourceCard key={resource.id} resource={resource}
+            category={categories.find((item) => item.id === resource.categoryId)} view={resourceView} mode={mode}
+            onOpen={() => mode !== "trash" && openDetail(resource.id)} onAction={(next) => action(resource, next)} />)}
+        </AnimatePresence></div>
+        {limit < visible.length && <div ref={observerTarget} style={{ height: 1, width: "100%" }} />}
+      </>
         : <div className="empty-state"><div className="empty-mark"><BrandMark compact /></div>
           <h2>{query ? `No signals for “${query}”` : showingCategoryResources ? "Nothing in this cluster" : empty[0]}</h2>
           <p>{query ? "Try another frequency or clear the active filters." : showingCategoryResources ? "Log a discovery here to fill this cluster." : empty[1]}</p>

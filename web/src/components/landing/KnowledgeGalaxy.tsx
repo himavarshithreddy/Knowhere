@@ -1,17 +1,18 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { motion, useInView } from "framer-motion";
 
-const STAR_COUNT = 560;
+const isMobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
+const STAR_COUNT = isMobile ? 600 : 1200;
 const ARM_COUNT = 3;
 
 const THEME_COLORS = {
   dark: ["#e8dfc8", "#d89b4a", "#6d7ea8"],
-  light: ["#3a4a60", "#2e4f6d", "#6a7a5a"],
+  light: ["#161b26", "#d67c2f", "#2e4f6d"],
 } as const;
 
 const THEME_GLOW = {
   dark: { inner: "rgba(216, 155, 74, 0.12)", mid: "rgba(216, 155, 74, 0.04)" },
-  light: { inner: "rgba(46, 79, 109, 0.10)", mid: "rgba(46, 79, 109, 0.03)" },
+  light: { inner: "rgba(46, 79, 109, 0.25)", mid: "rgba(46, 79, 109, 0.10)" },
 } as const;
 
 type Star = {
@@ -37,7 +38,7 @@ function generateStars(): Star[] {
       angle,
       radius,
       colorIdx: Math.floor(Math.random() * 3),
-      size: 0.6 + Math.random() * 2.2,
+      size: 1.2 + Math.random() * 3.5,
       scatter,
     });
   }
@@ -59,7 +60,7 @@ type Stat = {
 };
 
 const STATS: Stat[] = [
-  { target: 847, label: "discoveries" },
+  { target: 120, label: "discoveries" },
   { target: 12, label: "clusters" },
   { target: 1, label: "universe" },
 ];
@@ -91,6 +92,17 @@ export function KnowledgeGalaxy() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rotationRef = useRef(0);
   const rafRef = useRef(0);
+  const isIntersecting = useRef(true);
+
+  useEffect(() => {
+    const section = canvasRef.current?.closest('section');
+    if (!section) return;
+    const io = new IntersectionObserver(([entry]) => {
+      isIntersecting.current = entry.isIntersecting;
+    }, { threshold: 0 });
+    io.observe(section);
+    return () => io.disconnect();
+  }, []);
 
   const statsRef = useRef<HTMLDivElement>(null);
   const statsInView = useInView(statsRef, { once: true, margin: "-51px" });
@@ -115,9 +127,13 @@ export function KnowledgeGalaxy() {
     const w = rect.width;
     const h = rect.height;
 
-    canvas.width = w * dpr;
-    canvas.height = h * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const targetW = Math.floor(w * dpr);
+    const targetH = Math.floor(h * dpr);
+    if (canvas.width !== targetW || canvas.height !== targetH) {
+      canvas.width = targetW;
+      canvas.height = targetH;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
 
     const cx = w / 2;
     const cy = h / 2;
@@ -146,7 +162,8 @@ export function KnowledgeGalaxy() {
       ctx.beginPath();
       ctx.arc(x, y, star.size * scale * 0.5, 0, Math.PI * 2);
       ctx.fillStyle = colors[star.colorIdx];
-      ctx.globalAlpha = 0.5 + Math.random() * 0.5;
+      const phase = Math.sin(Date.now() * 0.001 + star.scatter * 100);
+      ctx.globalAlpha = 0.5 + (phase + 1) * 0.25;
       ctx.fill();
     }
     ctx.globalAlpha = 1;
@@ -154,9 +171,10 @@ export function KnowledgeGalaxy() {
 
   useEffect(() => {
     const loop = () => {
+      rafRef.current = requestAnimationFrame(loop);
+      if (!isIntersecting.current || document.hidden) return;
       rotationRef.current += 0.0008;
       draw();
-      rafRef.current = requestAnimationFrame(loop);
     };
     rafRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafRef.current);
@@ -170,7 +188,7 @@ export function KnowledgeGalaxy() {
   }, [draw]);
 
   return (
-    <section className="landing-section galaxy-section" id="galaxy">
+    <section className="landing-section galaxy-section" id="galaxy" aria-hidden="true">
       <motion.div
         className="section-header"
         initial={{ opacity: 0, y: 32 }}

@@ -21,7 +21,7 @@ export function ResourceCard({ resource, category, view, mode, onOpen, onAction 
     resource.type === "pdf" ? "resource-media-pdf" : ""
   ].filter(Boolean).join(" ");
 
-  return <motion.article layout className={`resource-card ${view}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+  return <motion.article className={`resource-card ${view}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
     exit={{ opacity: 0, scale: .96 }} onClick={onOpen} tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onOpen()}>
     <div className={mediaClass}>
       <ResourceMediaPreview resource={resource} previewUrl={previewUrl} />
@@ -46,7 +46,6 @@ export function ResourceCard({ resource, category, view, mode, onOpen, onAction 
             </a>
           )}
           <button aria-label="Move to trash" onClick={() => onAction("trash")}><Trash2 /></button>
-          <button aria-label="More options"><MoreHorizontal /></button>
         </>}
       </div>
     </div>

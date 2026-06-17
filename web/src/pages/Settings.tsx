@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Download, GripVertical, Moon, Plus, Trash2, UserRound } from "lucide-react";
 import { api } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
@@ -18,6 +19,10 @@ export function Settings() {
   const [newCategory, setNewCategory] = useState("");
   const [message, setMessage] = useState("");
   const [logoPreviewOpen, setLogoPreviewOpen] = useState(false);
+  const navigate = useNavigate();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean; title: string; description: string; onConfirm: () => void; confirmLabel: string; danger?: boolean;
+  }>({ open: false, title: "", description: "", onConfirm: () => {}, confirmLabel: "" });
 
   usePageSeo({
     title: SEO.settings.title,
@@ -37,7 +42,7 @@ export function Settings() {
     } catch (error) { setMessage(error instanceof Error ? error.message : "Export failed."); }
   };
 
-  return <main className="workspace settings-page">
+  return <main id="main-content" className="workspace settings-page">
     <header className="workspace-header">
       <div className="workspace-header-main">
         <WorkspaceHeaderMeta eyebrow="Preferences and data" />
@@ -53,10 +58,19 @@ export function Settings() {
           : <span className="verified coords">Coords account</span>}
       </div>
       <div className="settings-actions"><SignOutButton />
-        <button className="button danger" onClick={async () => {
-          if (!confirm("Delete your account and every saved resource? This cannot be undone.")) return;
-          await api.deleteAccount();
-          window.location.href = "/";
+        <button className="button danger" onClick={() => {
+          setConfirmDialog({
+            open: true,
+            title: "Delete Account",
+            description: "Delete your account and every saved resource? This cannot be undone.",
+            confirmLabel: "Delete account",
+            danger: true,
+            onConfirm: async () => {
+              setConfirmDialog(prev => ({ ...prev, open: false }));
+              await api.deleteAccount();
+              navigate("/");
+            }
+          });
         }}><Trash2 /> Delete account</button></div>
     </section>
     <section className="settings-section"><div className="settings-heading"><GripVertical /><div><h2>Clusters</h2><p>Create, rename, reorder, and manage your clusters.</p></div></div>
@@ -71,9 +85,21 @@ export function Settings() {
         }}>↑</button><button disabled={index === categories.length-1} onClick={() => {
           const next = [...categories]; [next[index+1], next[index]] = [next[index], next[index+1]]; reorderCategories(next);
         }}>↓</button></div>
-        {!category.isDefault && <button className="icon-button danger-text" aria-label={`Delete ${category.name}`} onClick={async () => {
+        {!category.isDefault && <button className="icon-button danger-text" aria-label={`Delete ${category.name}`} onClick={() => {
           const general = categories.find((item) => item.isDefault);
-          if (general && confirm(`Delete ${category.name}? Its resources will move to General.`)) await removeCategory(category.id, general.id);
+          if (general) {
+            setConfirmDialog({
+              open: true,
+              title: `Delete ${category.name}`,
+              description: `Are you sure? Its resources will move to General.`,
+              confirmLabel: "Delete cluster",
+              danger: true,
+              onConfirm: async () => {
+                setConfirmDialog(prev => ({ ...prev, open: false }));
+                await removeCategory(category.id, general.id);
+              }
+            });
+          }
         }}><Trash2 /></button>}
       </div>)}</div>
     </section>
@@ -89,5 +115,18 @@ export function Settings() {
       {message && <p className="status-message" role="status">{message}</p>}
     </section>
     <LogoPreviewModal open={logoPreviewOpen} onClose={() => setLogoPreviewOpen(false)} />
+
+    {confirmDialog.open && (
+      <div className="modal-overlay" onClick={() => setConfirmDialog(p => ({ ...p, open: false }))} style={{position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000}}>
+        <div className="modal-content" onClick={e => e.stopPropagation()} style={{background: 'var(--bg-card)', padding: '24px', borderRadius: '12px', maxWidth: '400px', width: '100%', border: '1px solid var(--border)'}}>
+          <h3 style={{margin: '0 0 8px 0'}}>{confirmDialog.title}</h3>
+          <p style={{margin: '0 0 24px 0', color: 'var(--text-muted)'}}>{confirmDialog.description}</p>
+          <div style={{display: 'flex', gap: '12px', justifyContent: 'flex-end'}}>
+            <button className="button secondary" onClick={() => setConfirmDialog(p => ({ ...p, open: false }))}>Cancel</button>
+            <button className={`button ${confirmDialog.danger ? 'danger' : 'primary'}`} onClick={confirmDialog.onConfirm}>{confirmDialog.confirmLabel}</button>
+          </div>
+        </div>
+      </div>
+    )}
   </main>;
 }

@@ -65,20 +65,26 @@ function getTheme(): "dark" | "light" {
 
 export function CosmicScene() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const isIntersecting = useRef(true);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+
+    /* ── mobile performance detection ── */
+    const isMobile = window.innerWidth < 768;
+    const mobileFactor = isMobile ? 0.5 : 1;
 
     let currentTheme = getTheme();
     let palette = PALETTES[currentTheme];
 
     /* ── renderer ── */
     const renderer = new THREE.WebGLRenderer({
-      antialias: window.devicePixelRatio < 2,
+      antialias: !isMobile && window.devicePixelRatio < 2,
       alpha: true,
+      powerPreference: isMobile ? "low-power" : "default",
     });
-    const dpr = Math.min(window.devicePixelRatio, 2);
+    const dpr = Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2);
     renderer.setPixelRatio(dpr);
     renderer.setSize(window.innerWidth, window.innerHeight);
     container.appendChild(renderer.domElement);
@@ -101,7 +107,7 @@ export function CosmicScene() {
     /* ═══════════════════════════════
        STAR FIELD
        ═══════════════════════════════ */
-    const STAR_COUNT = 2000;
+    const STAR_COUNT = isMobile ? 400 : Math.round(2000 * mobileFactor);
     const starPos = new Float32Array(STAR_COUNT * 3);
     const starSizes = new Float32Array(STAR_COUNT);
     const starPhases = new Float32Array(STAR_COUNT);
@@ -139,7 +145,7 @@ export function CosmicScene() {
     /* ═════════════════════════════
        ACCENT STARS — larger
        ═════════════════════════════ */
-    const GOLD_COUNT = 150;
+    const GOLD_COUNT = isMobile ? 50 : Math.round(150 * mobileFactor);
     const goldPos = new Float32Array(GOLD_COUNT * 3);
     const goldSizes = new Float32Array(GOLD_COUNT);
     const goldPhases = new Float32Array(GOLD_COUNT);
@@ -229,7 +235,7 @@ export function CosmicScene() {
     const fragments: THREE.Group[] = [];
     const cardMats: THREE.MeshBasicMaterial[] = [];
     const edgeMats: THREE.LineBasicMaterial[] = [];
-    const FRAG_COUNT = 8;
+    const FRAG_COUNT = isMobile ? 4 : 8;
 
     for (let i = 0; i < FRAG_COUNT; i++) {
       const group = new THREE.Group();
@@ -290,7 +296,7 @@ export function CosmicScene() {
     /* ═══════════════════
        INTERACTIVE DUST
        ═══════════════════ */
-    const DUST_COUNT = 500;
+    const DUST_COUNT = isMobile ? 100 : Math.round(500 * mobileFactor);
     const dustPositions = new Float32Array(DUST_COUNT * 3);
     const dustHome = new Float32Array(DUST_COUNT * 3);
     const dustVel = new Float32Array(DUST_COUNT * 3);
@@ -429,6 +435,14 @@ export function CosmicScene() {
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
 
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        isIntersecting.current = entry.isIntersecting;
+      },
+      { threshold: 0 }
+    );
+    if (container) io.observe(container);
+
     /* ══════════════════
        RENDER LOOP
        ══════════════════ */
@@ -437,6 +451,7 @@ export function CosmicScene() {
 
     const render = () => {
       frameId = requestAnimationFrame(render);
+      if (!isIntersecting.current || document.hidden) return;
       const t = clock.getElapsedTime();
 
       // Smooth mouse lerp
@@ -528,6 +543,7 @@ export function CosmicScene() {
     return () => {
       cancelAnimationFrame(frameId);
       observer.disconnect();
+      io.disconnect();
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
