@@ -51,7 +51,7 @@ export function Settings() {
       <WorkspaceHeaderActions />
     </header>
     <section className="settings-section"><div className="settings-heading"><UserRound /><div><h2>Account</h2><p>Your identity and your Knowhere collection.</p></div></div>
-      <div className="account-row">{user?.photoURL ? <img src={user.photoURL} alt="" /> : <div className="avatar">{user?.displayName?.[0]}</div>}
+      <div className="account-row">{user?.photoURL ? <img src={user.photoURL} alt={`${user.displayName}'s avatar`} width="40" height="40" /> : <div className="avatar">{user?.displayName?.[0]}</div>}
         <div><strong>{user?.displayName}</strong><span>{user?.email}</span></div>
         {user?.authProvider === "google"
           ? <span className="verified">Google verified</span>

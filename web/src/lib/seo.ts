@@ -2,9 +2,9 @@ export const SITE_NAME = "Knowhere";
 
 export const SEO = {
   home: {
-    title: "Knowhere — Private collection for links, notes, images, and PDFs",
+    title: "Private Knowledge Vault & Bookmark Manager | Knowhere",
     description:
-      "Save links, notes, images, and PDFs with the context that makes them worth keeping. Organize by category, search by meaning, and keep one private collection.",
+      "Save links, videos, posts, articles, notes, and ideas with the context that makes them worth keeping. A private knowledge vault to organize your mind.",
     keywords:
       "bookmark manager, private collection, save links, notes app, PDF organizer, personal knowledge base, link saver"
   },

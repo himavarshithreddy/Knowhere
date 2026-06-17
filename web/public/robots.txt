@@ -6,3 +6,5 @@ Disallow: /archive
 Disallow: /trash
 Disallow: /settings
 Disallow: /recover
+
+Sitemap: https://knowhere.app/sitemap.xml

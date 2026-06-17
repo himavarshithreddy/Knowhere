@@ -227,7 +227,7 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
           <div className="form-col-right">
             {(type === "image" || type === "pdf") && file && filePreviewUrl && <div className={`file-preview preview-card${type === "pdf" ? " preview-card-pdf" : ""}`}>
               {type === "image"
-                ? <img src={filePreviewUrl} alt={file.name} />
+                ? <img src={filePreviewUrl} alt={file.name} width="400" height="300" />
                 : <ResourceMediaPreview resource={{
                   id: "draft", ownerId: "", type: "pdf", title: file.name.replace(/\.pdf$/i, ""),
                   description: "", categoryId: "", fileName: file.name, favorite: false, archived: false,
@@ -247,7 +247,7 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
             {metadata && type === "link" && previewStatus === "ready" && <div className={`preview-card preview-card-link${linkPreviewText && isSocialPostUrl(url.trim()) ? " preview-card-social" : ""}`}>
               <div className={`preview-card-media${linkPreviewImage ? "" : " preview-card-media-text"}`}>
                 {linkPreviewImage
-                  ? <img src={linkPreviewImage} alt="" />
+                  ? <img src={linkPreviewImage} alt={metadata.title || "Link preview"} width="400" height="300" />
                   : linkPreviewText
                     ? <p className="preview-quote">{linkPreviewText}</p>
                     : null}

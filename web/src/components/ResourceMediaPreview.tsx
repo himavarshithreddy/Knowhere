@@ -40,7 +40,7 @@ export function ResourceMediaPreview({ resource, previewUrl }: { resource: Resou
   }
 
   if (previewUrl && !social) {
-    return <img src={previewUrl} alt={title} loading="lazy" />;
+    return <img src={previewUrl} alt={title} loading="lazy" width="400" height="300" />;
   }
 
   if (social && previewText) {
@@ -82,14 +82,14 @@ export function DetailMediaPreview({ resource }: { resource: Resource }) {
   if (resource.type === "image" && resource.downloadUrl) {
     return <div className="detail-media">
       <a href={resource.downloadUrl} target="_blank" rel="noreferrer" className="detail-image-link">
-        <img className="detail-image" src={resource.downloadUrl} alt={resourceDisplayTitle(resource)} />
+        <img className="detail-image" src={resource.downloadUrl} alt={resourceDisplayTitle(resource)} width="800" height="600" />
       </a>
     </div>;
   }
 
   if (previewUrl && !(resource.url && isSocialPostUrl(resource.url))) {
     return <div className="detail-media">
-      <img className="detail-image" src={previewUrl} alt="" />
+      <img className="detail-image" src={previewUrl} alt={resourceDisplayTitle(resource)} width="800" height="600" />
     </div>;
   }
 

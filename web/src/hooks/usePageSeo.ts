@@ -6,6 +6,7 @@ type PageSeoOptions = {
   path?: string;
   robots?: string;
   keywords?: string;
+  image?: string;
 };
 
 function upsertMeta(name: string, content: string, attribute: "name" | "property" = "name") {
@@ -28,7 +29,7 @@ function upsertCanonical(href: string) {
   tag.href = href;
 }
 
-export function usePageSeo({ title, description, path = "/", robots, keywords }: PageSeoOptions) {
+export function usePageSeo({ title, description, path = "/", robots, keywords, image }: PageSeoOptions) {
   useEffect(() => {
     const origin = window.location.origin;
     const url = `${origin}${path}`;
@@ -39,16 +40,26 @@ export function usePageSeo({ title, description, path = "/", robots, keywords }:
     if (robots) upsertMeta("robots", robots);
     else upsertMeta("robots", "index, follow");
 
+    const defaultImage = `${origin}/pwa-512x512.png`;
+    const seoImage = image ? (image.startsWith('http') ? image : `${origin}${image}`) : defaultImage;
+
     upsertMeta("og:title", title, "property");
     upsertMeta("og:description", description, "property");
     upsertMeta("og:type", "website", "property");
     upsertMeta("og:url", url, "property");
     upsertMeta("og:site_name", "Knowhere", "property");
+    upsertMeta("og:locale", "en_US", "property");
+    upsertMeta("og:image", seoImage, "property");
+    upsertMeta("og:image:width", "512", "property");
+    upsertMeta("og:image:height", "512", "property");
 
     upsertMeta("twitter:card", "summary_large_image", "name");
+    upsertMeta("twitter:site", "@knowhere", "name");
+    upsertMeta("twitter:creator", "@knowhere", "name");
     upsertMeta("twitter:title", title, "name");
     upsertMeta("twitter:description", description, "name");
+    upsertMeta("twitter:image", seoImage, "name");
 
     upsertCanonical(url);
-  }, [title, description, path, robots, keywords]);
+  }, [title, description, path, robots, keywords, image]);
 }

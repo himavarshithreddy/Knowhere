@@ -3,6 +3,10 @@ name: Change Domain
 on:
   workflow_dispatch:
     inputs:
+      old_domain:
+        description: 'Old Domain Name to replace (e.g., knowhere.himavarshithreddy.in)'
+        required: true
+        default: 'knowhere.himavarshithreddy.in'
       new_domain:
         description: 'New Domain Name (e.g., knowhere.com)'
         required: true
@@ -27,36 +31,60 @@ jobs:
           script: |
             set -e
 
+            OLD_DOMAIN="${{ github.event.inputs.old_domain }}"
             DOMAIN="${{ github.event.inputs.new_domain }}"
             EMAIL="${{ github.event.inputs.email }}"
             ENV_FILE="/var/www/knowhere/server/.env"
             NGINX_CONF="/etc/nginx/sites-available/knowhere"
+            WEB_DIR="/var/www/knowhere/web"
+            
+            echo "1. Resetting Nginx Configuration for new domain..."
+            # Write a fresh HTTP template to wipe out any old Certbot configs that cause conflicts
+            sudo cat << 'EOF' > "$NGINX_CONF"
+            server {
+                listen 80;
+                server_name DOMAIN_PLACEHOLDER;
 
-            echo "1. Updating Nginx Configuration..."
-            if [ -f "$NGINX_CONF" ]; then
-              # Replace whatever server_name is currently there with the new domain
-              sudo sed -i "s|server_name .*;|server_name $DOMAIN;|g" "$NGINX_CONF"
-              sudo nginx -t
-              sudo systemctl reload nginx
-            else
-              echo "Nginx config not found at $NGINX_CONF!"
-              exit 1
-            fi
-
+                location / {
+                    proxy_pass http://localhost:3000;
+                    proxy_http_version 1.1;
+                    proxy_set_header Upgrade $http_upgrade;
+                    proxy_set_header Connection 'upgrade';
+                    proxy_set_header Host $host;
+                    proxy_cache_bypass $http_upgrade;
+                    
+                    add_header X-Frame-Options "SAMEORIGIN";
+                    add_header X-XSS-Protection "1; mode=block";
+                    add_header X-Content-Type-Options "nosniff";
+                }
+            }
+            EOF
+            sudo sed -i "s/DOMAIN_PLACEHOLDER/$DOMAIN/g" "$NGINX_CONF"
+            sudo nginx -t
+            sudo systemctl reload nginx
+            
             echo "2. Requesting SSL Certificate via Certbot..."
-            # Automatically accept TOS, use provided email, and force HTTPS redirect
+            # Certbot will cleanly add SSL to the fresh Nginx template
             sudo certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL" --redirect
 
-            echo "3. Updating CLIENT_URL in .env..."
+            echo "3. Updating Frontend (web/index.html) and rebuilding..."
+            cd "$WEB_DIR"
+            # Replace the old domain with the new domain in the frontend code
+            sudo sed -i "s|$OLD_DOMAIN|$DOMAIN|g" index.html
+            
+            npm install
+            npm run build
+
+            echo "4. Updating CLIENT_URL in server/.env..."
             if grep -q "^CLIENT_URL=" "$ENV_FILE"; then
-              sed -i "s|^CLIENT_URL=.*|CLIENT_URL=https://$DOMAIN|" "$ENV_FILE"
+              sudo sed -i "s|^CLIENT_URL=.*|CLIENT_URL=https://$DOMAIN|" "$ENV_FILE"
             else
-              echo "CLIENT_URL=https://$DOMAIN" >> "$ENV_FILE"
+              echo "CLIENT_URL=https://$DOMAIN" | sudo tee -a "$ENV_FILE" > /dev/null
             fi
 
-            echo "4. Reloading PM2 to apply Environment Variables..."
+            echo "5. Reloading PM2 to apply Environment Variables..."
             cd /var/www/knowhere
             pm2 reload knowhere
             pm2 save
             
-            echo "🎉 Domain migration to $DOMAIN complete!"
+            echo "🎉 Domain migration from $OLD_DOMAIN to $DOMAIN complete!"

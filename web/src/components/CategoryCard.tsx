@@ -14,7 +14,7 @@ export function CategoryCard({ category, count, previews, view, onOpen }: {
       onClick={onOpen} tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onOpen()}>
       <div className="category-list-thumb" aria-hidden="true">
         {cover
-          ? <img src={cover} alt="" loading="lazy" />
+          ? <img src={cover} alt={`${category.name} preview`} loading="lazy" width="400" height="300" />
           : <span>{category.name.slice(0, 1).toUpperCase()}</span>}
       </div>
       <div className="category-copy">
@@ -28,7 +28,7 @@ export function CategoryCard({ category, count, previews, view, onOpen }: {
   return <article className="category-card grid" style={{ "--category-hue": hue } as React.CSSProperties}
     onClick={onOpen} tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onOpen()}>
     <div className="category-peek" aria-hidden="true">
-      {cover ? <img src={cover} alt="" loading="lazy" /> : <span>{category.name.slice(0, 1).toUpperCase()}</span>}
+      {cover ? <img src={cover} alt={`${category.name} preview`} loading="lazy" width="400" height="300" /> : <span>{category.name.slice(0, 1).toUpperCase()}</span>}
       {previews.length > 1 && <span className="category-peek-more">+{previews.length - 1}</span>}
     </div>
     <div className="category-meta">
