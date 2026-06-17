@@ -67,10 +67,14 @@ jobs:
             # Certbot will cleanly add SSL to the fresh Nginx template
             sudo certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL" --redirect
 
-            echo "3. Updating Frontend (web/index.html) and rebuilding..."
+            echo "3. Updating Frontend Domain Environment Variable and rebuilding..."
             cd "$WEB_DIR"
-            # Replace the old domain with the new domain in the frontend code
-            sudo sed -i "s|$OLD_DOMAIN|$DOMAIN|g" index.html
+            # Update the domain environment variable for Vite to inject into index.html
+            if grep -q "^VITE_APP_DOMAIN=" .env.local 2>/dev/null || grep -q "^VITE_APP_DOMAIN=" .env.production 2>/dev/null; then
+              sudo sed -i "s|^VITE_APP_DOMAIN=.*|VITE_APP_DOMAIN=https://$DOMAIN|" .env.local || sudo sed -i "s|^VITE_APP_DOMAIN=.*|VITE_APP_DOMAIN=https://$DOMAIN|" .env.production
+            else
+              echo "VITE_APP_DOMAIN=https://$DOMAIN" | sudo tee -a .env.local > /dev/null
+            fi
             
             npm install
             npm run build
