@@ -70,10 +70,14 @@
   left: 0;
   right: 0;
   z-index: 50;
-  border-bottom: 1px solid color-mix(in srgb, var(--line) 40%, transparent);
-  background: color-mix(in srgb, var(--bg) 40%, transparent);
-  backdrop-filter: blur(17px);
-  -webkit-backdrop-filter: blur(17px);
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.landing-header.enter-header.is-scrolled {
+  background: var(--bg);
+  border-bottom-color: color-mix(in srgb, var(--line) 40%, transparent);
 }
 
 /* ─────────────────────
@@ -1239,9 +1243,10 @@
   }
 
   .nebula-visual {
-    max-width: 260px;
-    overflow: hidden;
+    max-width: 300px;
     margin: 0 auto;
+    transform: scale(0.75);
+    transform-origin: center center;
   }
 
   .nebula-text p {
@@ -1297,11 +1302,20 @@
     min-height: 48px;
   }
 
-  /* Larger min-height so constellation stars and labels are visible on mobile */
+  /* Scale up SVG so stars and labels are visible on mobile */
+  .clusters-section {
+    overflow: hidden;
+  }
+
   .clusters-map {
     max-height: none;
-    min-height: 200px;
+    min-height: 220px;
     max-width: 100%;
+  }
+
+  .clusters-map svg {
+    transform: scale(1.6);
+    transform-origin: center center;
   }
 }
 
@@ -1338,7 +1352,12 @@
 
 /* ── Header ── */
 [data-theme="light"] .landing-header.enter-header {
-  background: color-mix(in srgb, var(--bg) 40%, transparent);
+  background: transparent;
+  border-bottom-color: transparent;
+}
+
+[data-theme="light"] .landing-header.enter-header.is-scrolled {
+  background: var(--bg);
   border-bottom-color: color-mix(in srgb, var(--line) 40%, transparent);
 }
 

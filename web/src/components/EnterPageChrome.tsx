@@ -1,4 +1,4 @@
-import type { ReactNode, MouseEvent } from "react";
+import { type ReactNode, type MouseEvent, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { BrandMark } from "./BrandMark";
 import { ThemeToggle } from "./ThemeToggle";
@@ -10,6 +10,16 @@ type EnterPageChromeProps = {
 
 export function EnterPageChrome({ children, nav }: EnterPageChromeProps) {
   const navigate = useNavigate();
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const refreshHome = (event: MouseEvent) => {
     event.preventDefault();
     navigate("/");
@@ -17,7 +27,7 @@ export function EnterPageChrome({ children, nav }: EnterPageChromeProps) {
 
   return (
     <div className="enter-page landing-page-chrome">
-      <header className="enter-header landing-header">
+      <header className={`enter-header landing-header ${isScrolled ? "is-scrolled" : ""}`}>
         <a
           href="/"
           className="enter-header-brand"

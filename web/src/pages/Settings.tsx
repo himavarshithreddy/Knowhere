@@ -134,10 +134,10 @@ export function Settings() {
     <LogoPreviewModal open={logoPreviewOpen} onClose={() => setLogoPreviewOpen(false)} />
 
     {confirmDialog.open && (
-      <div className="modal-overlay" onClick={() => setConfirmDialog(p => ({ ...p, open: false }))} style={{position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000}}>
-        <div className="modal-content" onClick={e => e.stopPropagation()} style={{background: 'var(--bg-card)', padding: '24px', borderRadius: '12px', maxWidth: '400px', width: '100%', border: '1px solid var(--border)'}}>
+      <div className="modal-overlay" onClick={() => setConfirmDialog(p => ({ ...p, open: false }))} style={{position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.62)', backdropFilter: 'blur(6.8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px'}}>
+        <div className="modal-content" onClick={e => e.stopPropagation()} style={{background: 'var(--surface)', padding: '24px', borderRadius: '16px', maxWidth: '400px', width: '100%', border: '1px solid var(--line)', boxShadow: 'var(--shadow)'}}>
           <h3 style={{margin: '0 0 8px 0'}}>{confirmDialog.title}</h3>
-          <p style={{margin: '0 0 24px 0', color: 'var(--text-muted)'}}>{confirmDialog.description}</p>
+          <p style={{margin: '0 0 24px 0', color: 'var(--muted)', fontSize: '14px', lineHeight: '1.5'}}>{confirmDialog.description}</p>
           <div style={{display: 'flex', gap: '12px', justifyContent: 'flex-end'}}>
             <button className="button secondary" onClick={() => setConfirmDialog(p => ({ ...p, open: false }))}>Cancel</button>
             <button className={`button ${confirmDialog.danger ? 'danger' : 'primary'}`} onClick={confirmDialog.onConfirm}>{confirmDialog.confirmLabel}</button>
