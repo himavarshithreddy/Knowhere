@@ -222,7 +222,7 @@ function EnterAuth({ placement = "hero" }: EnterAuthProps) {
               exit={{ opacity: 0, y: -10 }}
             >
               <p className="enter-hint" style={{ marginTop: 0, marginBottom: "16px" }}>
-                Coords act as your unique, passwordless access code. Enter an existing one to log in, or a new one to sign up.
+                Coords act as your unique, passwordless access code (e.g., AB-1234). Enter an existing one to log in, or a new one to sign up.
               </p>
               <label className="field coords-field">
                 <span>Enter or Create Coords</span>
@@ -233,7 +233,7 @@ function EnterAuth({ placement = "hero" }: EnterAuthProps) {
                     onChange={(e) =>
                       setCoords(formatCoordsInput(e.target.value))
                     }
-                    placeholder="e.g., AB-1234"
+                    placeholder="AB-1234"
                     inputMode="text"
                     autoComplete="off"
                     spellCheck={false}
