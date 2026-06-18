@@ -1126,38 +1126,80 @@
    RESPONSIVE — MOBILE
    ════════════════════════ */
 @media (max-width: 595px) {
+
+  /* ── Hero — tighter, more immersive ── */
   .landing-hero {
     min-height: auto;
-    padding: 72px 16px 36px;
+    padding: 72px 16px 28px;
   }
 
   .hero-dock-wrap {
     max-width: none;
+    gap: 28px;
   }
 
   .hero-orbit-ring {
     display: none;
   }
 
+  /* ── Dock card — premium feel on mobile ── */
   .hero-dock-inner {
-    padding: 18px 15px 16px;
+    padding: 20px 18px 18px;
+    border-radius: 16px;
+    border-color: color-mix(in srgb, var(--accent) 30%, var(--line));
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--accent) 10%, transparent),
+      0 16px 48px color-mix(in srgb, var(--bg) 65%, transparent),
+      inset 0 1px 0 color-mix(in srgb, var(--text) 6%, transparent);
   }
 
-  .hero-title {
-    font-size: clamp(26px, 7vw, 32px);
+  .hero-dock-kicker {
+    font-size: 13px;
   }
 
-  .hero-subtitle {
-    font-size: 12.5px;
-    margin-bottom: 18px;
+  /* ── Hero text — larger, bolder, more impactful ── */
+  .hero-text {
+    padding: 0 4px;
   }
 
   .hero-eyebrow {
-    font-size: 8.5px;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    margin-bottom: 10px;
   }
 
+  .hero-title {
+    font-size: clamp(28px, 8vw, 36px);
+    line-height: 1.06;
+    letter-spacing: -0.04em;
+    max-width: none;
+  }
+
+  .hero-subtitle {
+    font-size: 13.5px;
+    line-height: 1.6;
+    margin-bottom: 0;
+    margin-inline: auto;
+    max-width: 36ch;
+  }
+
+  /* ── Hide scroll hint on mobile — layout is short enough ── */
+  .hero-scroll-hint {
+    display: none;
+  }
+
+  /* ── Sections — comfortable spacing ── */
   .landing-section {
-    padding: clamp(40px, 7vh, 64px) 16px;
+    padding: clamp(36px, 6vh, 56px) 16px;
+  }
+
+  .section-title {
+    font-size: clamp(22px, 6vw, 30px);
+  }
+
+  .section-subtitle {
+    font-size: 12.5px;
+    max-width: 38ch;
   }
 
   /* Nav links hidden on mobile — reachable by scrolling */
@@ -1182,20 +1224,46 @@
     min-height: 48px;
   }
 
+  .landing-gate .enter-divider {
+    margin: 10px 0 8px;
+  }
+
   .nebula-content {
     grid-template-columns: 1fr;
   }
 
-  .nebula-visual {
-    max-width: 221px;
+  /* Prevent nebula rings (fixed px sizes) from overflowing into Observatory */
+  .nebula-section {
+    overflow: hidden;
+    padding-bottom: clamp(24px, 5vh, 48px);
   }
 
+  .nebula-visual {
+    max-width: 260px;
+    overflow: hidden;
+    margin: 0 auto;
+  }
+
+  .nebula-text p {
+    font-size: 15px;
+  }
+
+  /* ── Observatory — bigger lens for visual punch ── */
   .observatory-results {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   .observatory-lens {
-    width: min(255px, 72.25vw);
+    width: min(280px, 75vw);
+  }
+
+  .observatory-visual {
+    gap: 24px;
+  }
+
+  .observatory-input {
+    min-height: 44px;
   }
 
   .galaxy-stats {
@@ -1205,7 +1273,14 @@
   }
 
   .galaxy-canvas-wrap {
-    max-width: 255px;
+    max-width: 260px;
+  }
+
+  /* ── Footer CTA ── */
+  .footer-cta-card {
+    padding: 32px 20px;
+    border-radius: 16px;
+    margin-bottom: 56px;
   }
 
   .footer-cta-title {
@@ -1222,8 +1297,11 @@
     min-height: 48px;
   }
 
+  /* Larger min-height so constellation stars and labels are visible on mobile */
   .clusters-map {
-    max-height: 255px;
+    max-height: none;
+    min-height: 200px;
+    max-width: 100%;
   }
 }
 

@@ -515,7 +515,8 @@ h1,h2,h3,p { margin-top: 0; }
   .workspace-header h1 { font-size: 30px; }
   .toolbar .new-resource { display: none; }
   .toolbar-cluster-primary { flex: 1 1 100%; }
-  .toolbar-cluster-filters { justify-content: flex-start; flex: 1 1 100%; margin-left: 0; overflow-x: auto; padding-bottom: 4px; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+  .toolbar-cluster-filters { justify-content: flex-start; flex: 1 1 100%; margin-left: 0; overflow-x: auto; padding-bottom: 4px; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .toolbar-cluster-filters::-webkit-scrollbar { display: none; }
   .toolbar-search { width: 100%; flex: 1 1 100%; max-width: none; }
   .toolbar-search input { min-height: 44px; }
   .toolbar { gap: 10px; padding: 12px 0 16px; flex-wrap: wrap; }
@@ -558,6 +559,8 @@ h1,h2,h3,p { margin-top: 0; }
 
   /* ── ResourceForm — full-height bottom sheet with sticky footer ── */
   .dialog-backdrop { padding: 0; align-items: end; }
+  /* Vault PIN modal should be a compact centered dialog, not a full-screen sheet */
+  .dialog-backdrop:has(.vault-modal) { padding: 20px; align-items: center; justify-content: center; }
   .resource-form {
     border-radius: 20px 20px 0 0; width: 100%;
     max-height: 100dvh; min-height: 0;
@@ -593,13 +596,15 @@ h1,h2,h3,p { margin-top: 0; }
 
   /* ── Detail panel mobile ── */
   .detail-panel { width: 100%; height: 100%; max-height: none; border-radius: 0; }
+  /* Override full-screen detail-panel styles for the compact vault modal */
+  .detail-panel.vault-modal { width: calc(100% - 32px); max-width: 340px; height: auto; max-height: 80dvh; border-radius: 16px; }
 
   /* ── Settings mobile ── */
   .settings-section { padding-block: 20px; }
   .setting-row { align-items: flex-start; flex-direction: column; }
   .account-row { grid-template-columns: 40px 1fr; }
   .verified { display: none !important; }
-  .category-row { grid-template-columns: 17px 1fr 47px 34px; }
+  .category-row { grid-template-columns: 17px 1fr auto 44px; }
   .category-row .reorder-buttons { display: none; }
   .logo-preview-grid { grid-template-columns: 1fr; max-width: 306px; }
   .logo-preview-hint { position: static; translate: none; margin-top: 17px; padding: 0 7px; }
