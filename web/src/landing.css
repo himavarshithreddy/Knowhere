@@ -580,18 +580,18 @@
 
 .nebula-ring {
   position: absolute;
-  inset: 0;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
   border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--line));
   border-radius: 50%;
 }
 
 .nebula-ring:nth-child(2) {
-  inset: 18%;
   border-color: color-mix(in srgb, var(--accent) 28%, var(--line));
 }
 
 .nebula-ring:nth-child(3) {
-  inset: 38%;
   border-color: color-mix(in srgb, var(--accent) 38%, var(--line));
 }
 
@@ -1244,8 +1244,8 @@
 
   .nebula-visual {
     max-width: 300px;
-    margin: 0 auto;
-    transform: scale(0.75);
+    margin: 40px auto 0; /* Add margin to account for ring overflow */
+    transform: scale(0.85);
     transform-origin: center center;
   }
 
@@ -1302,20 +1302,33 @@
     min-height: 48px;
   }
 
-  /* Scale up SVG so stars and labels are visible on mobile */
+  /* Perfectly frame the 6 clusters by scaling away the empty SVG margins */
   .clusters-section {
-    overflow: hidden;
+    padding-bottom: 24px;
+    overflow: hidden; /* Hide the scaled-out empty margins */
   }
 
   .clusters-map {
-    max-height: none;
-    min-height: 220px;
-    max-width: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
   }
 
   .clusters-map svg {
-    transform: scale(1.6);
+    width: 100%;
+    height: auto;
+    min-width: 0;
+    transform: scale(1.15); /* Reduced from 1.35 to prevent edge clipping */
     transform-origin: center center;
+  }
+
+  .cluster-label {
+    font-size: 16px; /* Optimized for the new 1.15 scale */
+  }
+
+  .cluster-line {
+    stroke-width: 2;
   }
 }
 
