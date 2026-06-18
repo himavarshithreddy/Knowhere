@@ -221,8 +221,11 @@ function EnterAuth({ placement = "hero" }: EnterAuthProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
             >
+              <p className="enter-hint" style={{ marginTop: 0, marginBottom: "16px" }}>
+                Coords act as your unique, passwordless access code. Enter an existing one to log in, or a new one to sign up.
+              </p>
               <label className="field coords-field">
-                <span>Coords</span>
+                <span>Enter or Create Coords</span>
                 <div className="coords-input-wrap">
                   <input
                     className="coords-input"
@@ -230,7 +233,7 @@ function EnterAuth({ placement = "hero" }: EnterAuthProps) {
                     onChange={(e) =>
                       setCoords(formatCoordsInput(e.target.value))
                     }
-                    placeholder="AB-1234"
+                    placeholder="e.g., AB-1234"
                     inputMode="text"
                     autoComplete="off"
                     spellCheck={false}
@@ -252,7 +255,7 @@ function EnterAuth({ placement = "hero" }: EnterAuthProps) {
                 <div className="coords-suggestions">
                   <div className="coords-suggestions-head">
                     <span className="coords-suggestions-label">
-                      Open on chart
+                      Or pick a new coordinate:
                     </span>
                     <button
                       type="button"
