@@ -62,3 +62,46 @@ pushRouter.post("/unsubscribe", async (req, res) => {
 
   res.json({ ok: true });
 });
+
+pushRouter.post("/test", async (req, res) => {
+  const user = await User.findOne({ uid: req.auth!.uid });
+  if (!user) return res.status(404).json({ error: "User not found." });
+
+  if (!user.pushSubscriptions || user.pushSubscriptions.length === 0) {
+    return res.status(400).json({ error: "No active push subscriptions found for this user." });
+  }
+
+  const payload = JSON.stringify({
+    title: "Test Connection",
+    body: "This is a test push notification from Knowhere! It is working successfully.",
+    url: "/dashboard"
+  });
+
+  let sentCount = 0;
+  let failCount = 0;
+
+  for (let i = user.pushSubscriptions.length - 1; i >= 0; i--) {
+    const sub = user.pushSubscriptions[i];
+    try {
+      await webpush.sendNotification(
+        { endpoint: sub.endpoint, keys: sub.keys as any },
+        payload
+      );
+      sentCount++;
+    } catch (err: any) {
+      if (err.statusCode === 410 || err.statusCode === 404) {
+        user.pushSubscriptions.splice(i, 1);
+        failCount++;
+      } else {
+        console.error(`[Push Test] Failed to send:`, err);
+        failCount++;
+      }
+    }
+  }
+
+  if (failCount > 0) {
+    await user.save();
+  }
+
+  res.json({ ok: true, sentCount, failCount });
+});

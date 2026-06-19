@@ -326,8 +326,8 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
             <div className="field"><label htmlFor="resource-intent">Classification</label>
               <select id="resource-intent" value={intentType} onChange={(e) => setIntentType(e.target.value)}>
                 <option value="unclassified">✨ Auto-classify (AI)</option>
-                <option value="knowledge">📚 Knowledge (Reference, Article, etc)</option>
-                <option value="mission">🎯 Mission (Project, Idea, Goal)</option>
+                <option value="knowledge">Knowledge (Reference, Article, etc)</option>
+                <option value="mission">Mission (Project, Idea, Goal)</option>
               </select>
             </div>
 

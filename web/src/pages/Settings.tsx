@@ -166,11 +166,32 @@ export function Settings() {
       <div className="setting-row"><div><strong>Logo preview</strong><span>Full-screen mark for capturing a PNG favicon.</span></div>
         <button type="button" className="button secondary" onClick={() => setLogoPreviewOpen(true)}>Preview logo</button></div>
     </section>
-    <section className="settings-section"><div className="settings-heading"><BellRing /><div><h2>Notifications</h2><p>Passive reminders for your vault.</p></div></div>
-      <div className="setting-row"><div><strong>Push Notifications</strong><span>Receive daily reminders for forgotten items and overdue missions.</span></div>
+    <section className="settings-section">
+      <div className="settings-heading">
+        <BellRing 
+          style={{ cursor: pushEnabled ? "pointer" : "default" }}
+          onClick={async () => {
+            if (!pushEnabled) return;
+            try {
+              setPushStatus("Sending test...");
+              await api.sendTestPush();
+              setPushStatus("Test notification sent!");
+            } catch (e: any) {
+              setPushStatus("Error: " + e.message);
+            }
+          }}
+        />
+        <div>
+          <h2>Notifications</h2>
+          <p>Passive reminders for your vault.</p>
+        </div>
+      </div>
+      <div className="setting-row">
+        <div><strong>Push Notifications</strong><span>Receive daily reminders for forgotten items and overdue missions.</span></div>
         <button className={`button ${pushEnabled ? 'danger' : 'primary'}`} onClick={togglePush}>
           {pushEnabled ? 'Disable' : 'Enable'}
-        </button></div>
+        </button>
+      </div>
       {pushStatus && <p className="status-message" role="status" style={{fontSize: '13px', color: 'var(--muted)', marginTop: '8px'}}>{pushStatus}</p>}
     </section>
     <section className="settings-section"><div className="settings-heading"><Lock /><div><h2>Vault</h2><p>Manage your classified discoveries.</p></div></div>
