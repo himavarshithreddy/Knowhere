@@ -71,6 +71,7 @@ self.addEventListener('push', (event) => {
     const title = data.title || 'Knowhere';
     const options = {
       body: data.body || '',
+      icon: '/push-icon.svg',
       badge: '/notification-badge.svg',
       data: { url: data.url || '/' },
       vibrate: [100, 50, 100],
