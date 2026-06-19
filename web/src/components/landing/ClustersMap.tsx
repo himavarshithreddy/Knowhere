@@ -114,10 +114,10 @@ export function ClustersMap() {
     >
       <div className="section-header">
 
-        <h2 className="section-title">Build your clusters</h2>
+        <span className="section-label">Intelligence Dashboard</span>
+        <h2 className="section-title">Watch your mind map itself</h2>
         <p className="section-subtitle">
-          Group discoveries into clusters — categories that map your
-          knowledge universe.
+          Unlock deep AI analysis and insights. Watch your knowledge dynamically map itself into intelligent clusters.
         </p>
       </div>
 

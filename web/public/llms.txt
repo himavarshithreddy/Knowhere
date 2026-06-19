@@ -1,0 +1,19 @@
+# Knowhere - AI-Powered Knowledge Vault & Bookmark Manager
+
+## Overview
+Knowhere is a private, AI-powered knowledge vault designed to store links, videos, posts, articles, and notes with full context. It eliminates manual organization by utilizing Google's Gemini AI to automatically analyze, summarize, and categorize (tag) all incoming resources. 
+
+## Key Unique Selling Points (USPs)
+1. **Passwordless "Coords"**: Users log in securely using unique alphanumeric identifiers (e.g., AB-1234) rather than traditional passwords.
+2. **Zero-Friction Collection & AI Tagging**: Users drop content into their inbox. AI automatically analyzes the content, generates summaries, identifies the source, and tags it appropriately.
+3. **Intent-Based Missions**: Users can set 'Missions' (goals or objectives) for their saved content.
+4. **Anti-Procrastination Push Notifications**: To help users achieve their Missions, Knowhere sends uncompromising, intense, and motivating Push Notifications to break procrastination habits. 
+5. **Intelligence Dashboard**: An AI-generated dashboard offering dynamic insights, analytics, and visual clusters of a user's knowledge base.
+
+## Target Audience
+Individuals who consume high volumes of information (researchers, developers, designers, students) and suffer from "bookmark bankruptcy"—saving things but never reading them or organizing them. Knowhere's uncompromising approach forces users to confront their backlog and complete their missions.
+
+## Technical Details
+- Frontend: React, Vite, Framer Motion
+- Backend: Node.js, Express, MongoDB Atlas, Google Gemini API
+- Push Notifications: Web Push API, Service Workers

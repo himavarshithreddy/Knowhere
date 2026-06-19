@@ -2,11 +2,11 @@ export const SITE_NAME = "Knowhere";
 
 export const SEO = {
   home: {
-    title: "Private Knowledge Vault & Bookmark Manager | Knowhere",
+    title: "AI-Powered Knowledge Vault & Bookmark Manager | Knowhere",
     description:
-      "Save links, videos, posts, articles, notes, and ideas with the context that makes them worth keeping. A private knowledge vault to organize your mind.",
+      "Save links, videos, and notes. Knowhere uses AI to auto-tag, analyze insights, track missions, and send uncompromising push notifications to crush procrastination.",
     keywords:
-      "bookmark manager, private collection, save links, notes app, PDF organizer, personal knowledge base, link saver"
+      "AI bookmark manager, private collection, AI analysis, auto-tagging, missions, push notifications, personal knowledge base"
   },
   recover: {
     title: "Recover your Coords — Knowhere",
@@ -36,6 +36,16 @@ export const SEO = {
   settings: {
     title: "Settings — Knowhere",
     description: "Manage your Knowhere account, categories, and data.",
+    robots: "noindex, nofollow"
+  },
+  dashboard: {
+    title: "Intelligence Dashboard — Knowhere",
+    description: "Your AI-powered intelligence dashboard and deep insights.",
+    robots: "noindex, nofollow"
+  },
+  missions: {
+    title: "Missions — Knowhere",
+    description: "Track your intents and missions to crush procrastination.",
     robots: "noindex, nofollow"
   }
 } as const;

@@ -69,12 +69,12 @@ export function DiscoveriesFlow() {
         whileInView="show"
         viewport={{ once: true, margin: "-51px" }}
       >
-        <span className="section-label">What you collect</span>
+        <span className="section-label">Zero-Friction Collection</span>
         <h2 className="section-title">
-          Discoveries across the universe
+          Drop it in. AI handles the rest.
         </h2>
         <p className="section-subtitle">
-          Everything worth remembering, from every corner of the internet.
+          Save everything worth remembering. Our AI instantly analyzes, summarizes, and auto-tags your discoveries.
         </p>
       </motion.div>
 

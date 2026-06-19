@@ -15,6 +15,7 @@ const DiscoveriesFlow = lazy(() => import("../components/landing/DiscoveriesFlow
 const ClustersMap = lazy(() => import("../components/landing/ClustersMap").then(m => ({ default: m.ClustersMap })));
 const MemoryNebula = lazy(() => import("../components/landing/MemoryNebula").then(m => ({ default: m.MemoryNebula })));
 const ObservatorySearch = lazy(() => import("../components/landing/ObservatorySearch").then(m => ({ default: m.ObservatorySearch })));
+const MissionsControl = lazy(() => import("../components/landing/MissionsControl").then(m => ({ default: m.MissionsControl })));
 const KnowledgeGalaxy = lazy(() => import("../components/landing/KnowledgeGalaxy").then(m => ({ default: m.KnowledgeGalaxy })));
 const CosmicFooter = lazy(() => import("../components/landing/CosmicFooter").then(m => ({ default: m.CosmicFooter })));
 
@@ -431,8 +432,9 @@ export function Enter() {
   const navLinks = (
     <>
       <a href="#discoveries">Discover</a>
-      <a href="#clusters">Organize</a>
+      <a href="#clusters">Intelligence</a>
       <a href="#observatory">Search</a>
+      <a href="#missions">Missions</a>
     </>
   );
 
@@ -483,6 +485,7 @@ export function Enter() {
             <ClustersMap />
             <MemoryNebula />
             <ObservatorySearch />
+            <MissionsControl />
             <KnowledgeGalaxy />
             <CosmicFooter />
           </Suspense>

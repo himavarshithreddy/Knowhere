@@ -2,9 +2,9 @@ import { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 
 const NARRATIVES = [
-  'Every link saved becomes a new star.',
-  'Every note captured adds depth to your galaxy.',
-  'Every idea preserved makes your universe richer.',
+  'Let AI connect the dots across your entire collection.',
+  'Generate summaries, discover insights, and find hidden patterns.',
+  'Your digital brain, completely analyzed and understood.',
 ] as const;
 
 /** Generate evenly distributed dot positions around a ring */
@@ -47,6 +47,7 @@ export function MemoryNebula() {
         {/* Text column */}
         <div className="nebula-text">
 
+          <span className="section-label" style={{ display: 'block', marginBottom: '16px' }}>Generative Intelligence</span>
           <h2 className="section-title">Your universe expands</h2>
 
           {NARRATIVES.map((text, i) => (

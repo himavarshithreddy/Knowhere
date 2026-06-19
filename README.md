@@ -25,22 +25,27 @@ No passwords to remember. No cluttered UI. Just your universe of information, pe
 ## Why Knowhere?
 
 - **Simplicity by Design:** A fluid, app-like experience that gets out of your way and lets you focus on your content.
+- **AI-Powered Intelligence:** Say goodbye to manual tagging. Gemini AI auto-analyzes, categorizes, and summarizes everything you save.
+- **Uncompromising Motivation:** Stop procrastinating. Set Missions and let Knowhere send you intense push notifications to force you into action.
 - **Privacy First:** Your data is yours. Protected by enterprise-grade security and accessible only via your unique access code.
 - **Instant Access Anywhere:** Seamlessly transition between desktop and mobile. Your collection is always just a set of Coords away.
 
 ## Key Features
 
-### Universal Storage
-Save anything. Drop links, write quick notes, upload images, or store full PDF documents in one unified inbox.
+### Zero-Friction AI Tagging
+Save anything. Drop links, write quick notes, or upload images. Knowhere's AI automatically analyzes, tags, and groups your resources. No manual organization required.
+
+### Intelligence Dashboard
+A dynamic, AI-generated dashboard offering deep insights, visual clusters, and analytics on your knowledge universe.
+
+### Intent-Based Missions
+Set specific missions for your saved content. Turn a chaotic inbox into a targeted action plan.
+
+### Uncompromising Push Notifications
+Knowhere doesn't let you forget. It sends intense, motivating push notifications to break your procrastination habits and help you achieve your missions.
 
 ### Instant "Coords" Access
 Jump into your collection from any device using just your unique Coords (e.g., `AB-1234`). No more forgotten passwords or clunky login screens.
-
-### Smart Organization
-Keep your universe tidy. Tag and group your resources with custom categories tailored to your workflow.
-
-### Safe Deletion
-Accidentally deleted something? The 30-day trash retention ensures you never lose a memory permanently.
 
 ---
 
@@ -59,7 +64,9 @@ Knowhere is an open-source SaaS built with a modern, high-performance TypeScript
 
 ### Tech Stack
 - **Frontend:** React 19, Vite, React Router, TanStack Query, Framer Motion
-- **Backend:** Express API, MongoDB Atlas
+- **Backend:** Node.js, Express API, MongoDB Atlas
+- **AI Integration:** Google Gemini API
+- **Push Notifications:** Web Push API, Service Workers
 - **Storage & Auth:** Firebase Storage, Firebase Authentication (Passwordless & Google SSO)
 - **Monorepo:** Shared Zod schemas between client and server
 
