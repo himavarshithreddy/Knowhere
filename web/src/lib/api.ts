@@ -71,11 +71,45 @@ export const api = {
   deleteCategory: (id: string, destinationId: string) =>
     request<{ ok: boolean }>(`/api/categories/${id}`, { method: "DELETE", body: JSON.stringify({ destinationId }) }),
 
-  getResources: () => request<Resource[]>("/api/resources"),
+  getResources: (filters?: { intentType?: string; actionStatus?: string }) => {
+    const params = new URLSearchParams();
+    if (filters?.intentType) params.append("intentType", filters.intentType);
+    if (filters?.actionStatus) params.append("actionStatus", filters.actionStatus);
+    const query = params.toString() ? `?${params.toString()}` : "";
+    return request<Resource[]>(`/api/resources${query}`);
+  },
   createResource: (input: ResourceInput) => request<Resource>("/api/resources", { method: "POST", body: JSON.stringify(input) }),
   updateResource: (id: string, patch: Partial<Resource>) =>
     request<Resource>(`/api/resources/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
   deleteResource: (id: string) => request<{ ok: boolean }>(`/api/resources/${id}`, { method: "DELETE" }),
+  recordView: (id: string) => request<{ ok: boolean; viewCount: number; lastViewedAt: string }>(`/api/resources/${id}/view`, { method: "POST" }),
+
+  getDashboardData: () => request<{ 
+    transmissions: { resource: Resource, reason: string }[], 
+    activeMissions: Resource[], 
+    brokenPromises: Resource[],
+    opportunities: Resource[],
+    weeklyRecap: {
+      newSavesThisWeek: number;
+      reviewedThisWeek: number;
+      projectsStarted: number;
+      projectsCompleted: number;
+      itemsGoneDormant: number;
+      topTagsThisWeek: string[];
+    };
+  }>("/api/rediscovery/dashboard"),
+
+  getInterests: () => request<{ interests: { topic: string; tags: string[]; resourceCount: number; recentActivity: boolean; }[] }>("/api/interests"),
+  getRelatedResources: (id: string) => request<{ related: Resource[] }>(`/api/interests/${id}/related`),
+  
+  getStats: () => request<{
+    total: number;
+    byIntent: Record<string, number>;
+    byStatus: Record<string, number>;
+    actionRate: number;
+    completionRate: number;
+    forgottenCount: number;
+  }>("/api/stats"),
 
   extractMetadata: (url: string) => request<ExtractedMetadata>("/api/metadata/extract", { method: "POST", body: JSON.stringify({ url }) }),
   exportLibrary: (format: "json" | "csv") => request<{ format: string; content: string }>(`/api/export?format=${format}`),
@@ -84,6 +118,10 @@ export const api = {
   setupVault: (pin: string) => request<{ ok: boolean }>("/api/vault/setup", { method: "POST", body: JSON.stringify({ pin }) }),
   verifyVault: (pin: string) => request<{ ok: boolean }>("/api/vault/verify", { method: "POST", body: JSON.stringify({ pin }) }),
   resetVault: () => request<{ ok: boolean }>("/api/vault/reset", { method: "POST" }),
+
+  getVapidPublicKey: () => request<{ publicKey: string }>("/api/push/public-key"),
+  subscribePush: (subscription: PushSubscription) => request<{ ok: boolean }>("/api/push/subscribe", { method: "POST", body: JSON.stringify(subscription) }),
+  unsubscribePush: (endpoint: string) => request<{ ok: boolean }>("/api/push/unsubscribe", { method: "POST", body: JSON.stringify({ endpoint }) }),
 
   uploadFile(resourceId: string, file: File, onProgress: (value: number) => void) {
     return new Promise<Resource>((resolve, reject) => {

@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useLayoutEffect, Suspense, lazy } from "react";
 import { BrowserRouter, NavLink, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
-import { Archive as ArchiveIcon, BookOpen as BookOpenIcon, Heart as HeartIcon, Settings as SettingsGearIcon } from "lucide-react";
+import { BookOpen as BookOpenIcon, Compass as CompassIcon, Heart as HeartIcon, Settings as SettingsGearIcon, Target as TargetIcon } from "lucide-react";
 import { AppLoader } from "./components/AppLoader";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { DataProvider, useData } from "./contexts/DataContext";
@@ -12,6 +12,8 @@ import "./styles.css";
 const Enter = lazy(() => import("./pages/Enter").then(m => ({ default: m.Enter })));
 
 const Recover = lazy(() => import("./pages/Recover").then(m => ({ default: m.Recover })));
+const Dashboard = lazy(() => import("./pages/Dashboard").then(m => ({ default: m.Dashboard })));
+const Missions = lazy(() => import("./pages/Missions").then(m => ({ default: m.Missions })));
 const Library = lazy(() => import("./pages/Library").then(m => ({ default: m.Library })));
 const Settings = lazy(() => import("./pages/Settings").then(m => ({ default: m.Settings })));
 
@@ -47,7 +49,7 @@ function PwaUpdater() {
 }
 
 function PostAuthRedirect() {
-  return <Navigate to="/library" replace />;
+  return <Navigate to="/dashboard" replace />;
 }
 
 function GuestOnly({ children }: { children: ReactNode }) {
@@ -86,12 +88,14 @@ function AppRoutes() {
     <Suspense fallback={<AppLoader message="Loading workspace..." />}>
       <Routes>
         <Route element={<Shell />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/missions" element={<Missions />} />
           <Route path="/library" element={<Library />} />
           <Route path="/favorites" element={<Library mode="favorites" />} />
           <Route path="/archive" element={<Library mode="archive" />} />
           <Route path="/trash" element={<Library mode="trash" />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="*" element={<Navigate to="/library" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
       </Routes>
     </Suspense>
@@ -104,9 +108,10 @@ const CustomCursor = lazy(() => import("./components/CustomCursor").then(m => ({
 
 function MobileNav() {
   return <nav className="mobile-nav">
-    <NavLink to="/library"><BookOpenIcon /><span>Discoveries</span></NavLink>
+    <NavLink to="/dashboard"><CompassIcon /><span>Home</span></NavLink>
+    <NavLink to="/missions"><TargetIcon /><span>Missions</span></NavLink>
+    <NavLink to="/library"><BookOpenIcon /><span>Library</span></NavLink>
     <NavLink to="/favorites"><HeartIcon /><span>Favorites</span></NavLink>
-    <NavLink to="/archive"><ArchiveIcon /><span>Archive</span></NavLink>
     <NavLink to="/settings"><SettingsGearIcon /><span>Settings</span></NavLink>
   </nav>;
 }
@@ -128,7 +133,7 @@ export default function App() {
             <Routes>
               <Route path="/recover" element={<Recover />} />
               <Route path="/login" element={<Navigate to="/" replace />} />
-              <Route path="/welcome" element={<Navigate to="/library" replace />} />
+              <Route path="/welcome" element={<Navigate to="/dashboard" replace />} />
               <Route path="/*" element={<RequireAuth><AppRoutes /></RequireAuth>} />
             </Routes>
           </Suspense>

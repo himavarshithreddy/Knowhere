@@ -13,6 +13,7 @@ import { ResourceCard } from "../components/ResourceCard";
 import { ResourceForm } from "../components/ResourceForm";
 import { ResourceDetail } from "../components/ResourceDetail";
 import { ToolbarMenu } from "../components/ToolbarMenu";
+import { TagFilterMenu } from "../components/TagFilterMenu";
 import { WorkspaceHeaderActions } from "../components/WorkspaceHeaderActions";
 import { WorkspaceHeaderMeta } from "../components/WorkspaceHeaderMeta";
 import { usePageSeo } from "../hooks/usePageSeo";
@@ -28,11 +29,31 @@ export function Library({ mode = "library" }: { mode?: "library" | "favorites" |
   const [category, setCategory] = useState("all");
   const [sort, setSort] = useState("newest");
   const [limit, setLimit] = useState(50);
+  const [selectedTags, setSelectedTags] = useState<string[]>(() => {
+    // Pre-populate from ?tag= URL param (used by clickable tags on cards)
+    const tagParam = new URLSearchParams(window.location.search).get("tag");
+    return tagParam ? [tagParam] : [];
+  });
+  const [intentFilter, setIntentFilter] = useState("all");
   const observerTarget = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLimit(50);
-  }, [category, query, sort, mode]);
+  }, [category, query, sort, mode, selectedTags, intentFilter]);
+
+  // Sync ?tag= URL param changes (when user navigates here via clickable tag)
+  useEffect(() => {
+    const tagParam = searchParams.get("tag");
+    if (tagParam) {
+      setSelectedTags([tagParam]);
+      // Remove from URL so it doesn't re-trigger
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev);
+        next.delete("tag");
+        return next;
+      }, { replace: true });
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -78,6 +99,15 @@ export function Library({ mode = "library" }: { mode?: "library" | "favorites" |
     return !resource.archived;
   }), [resources, mode]);
 
+  // All unique tags across the current base resources (for the filter menu)
+  const availableTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    for (const r of baseResources) {
+      (r.tags ?? []).forEach(t => tagSet.add(t));
+    }
+    return Array.from(tagSet).sort();
+  }, [baseResources]);
+
   const categoryCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const resource of baseResources) {
@@ -114,13 +144,17 @@ export function Library({ mode = "library" }: { mode?: "library" | "favorites" |
   const visible = useMemo(() => {
     let result = baseResources;
     if (effectiveCategory !== "all") result = result.filter((resource) => resource.categoryId === effectiveCategory);
+    // Apply intent filter
+    if (intentFilter !== "all") result = result.filter(r => r.intentType === intentFilter);
+    // Apply tag filter (OR logic — resource must have ANY selected tag)
+    if (selectedTags.length > 0) result = result.filter(r => selectedTags.some(t => (r.tags ?? []).includes(t)));
     result = searchResources(result, query, categories);
     return [...result].sort((a, b) => {
       if (sort === "oldest") return a.createdAt.localeCompare(b.createdAt);
       if (sort === "az") return resourceDisplayTitle(a).localeCompare(resourceDisplayTitle(b));
       return b.createdAt.localeCompare(a.createdAt);
     });
-  }, [baseResources, effectiveCategory, query, sort, categories]);
+  }, [baseResources, effectiveCategory, query, sort, categories, selectedTags, intentFilter]);
 
   const visibleCategories = useMemo(() => [...categories].sort((a, b) => {
     if (sort === "az") return a.name.localeCompare(b.name);
@@ -308,6 +342,24 @@ export function Library({ mode = "library" }: { mode?: "library" | "favorites" |
               }
             }} />
         )}
+        {!showingCategories && (
+          <ToolbarMenu aria-label="Filter by intent" value={intentFilter}
+            options={[
+              { value: "all", label: "All intents" },
+              { value: "knowledge", label: "Knowledge" },
+              { value: "project", label: "Project" },
+              { value: "idea", label: "Idea" },
+              { value: "goal", label: "Goal" },
+            ]}
+            onChange={setIntentFilter} />
+        )}
+        {!showingCategories && (
+          <TagFilterMenu
+            availableTags={availableTags}
+            selectedTags={selectedTags}
+            onChange={setSelectedTags}
+          />
+        )}
         <ToolbarMenu aria-label="Sort order" value={sort} options={sortOptions} onChange={setSort} />
         <div className="icon-pair">
           <button type="button" className={view === "grid" ? "active" : ""} onClick={() => updatePreferences({ view: "grid" })} aria-label="Grid view"><Grid2X2 /></button>
@@ -345,7 +397,7 @@ export function Library({ mode = "library" }: { mode?: "library" | "favorites" |
           <h2>{query ? `No signals for “${query}”` : showingCategoryResources ? "Nothing in this cluster" : empty[0]}</h2>
           <p>{query ? "Try another frequency or clear the active filters." : showingCategoryResources ? "Log a discovery here to fill this cluster." : empty[1]}</p>
           {mode === "library" && !query && <button className="button primary" onClick={openForm}><Plus /> Log your first discovery</button>}</div>}
-    <button className="mobile-fab" onClick={openForm} aria-label="Log discovery"><Plus /></button>
+    <button className="global-fab" onClick={openForm} aria-label="Log discovery"><Plus /></button>
     <ResourceForm open={formOpen} onClose={closeForm} initialCategory={formCategory} />
     <ResourceDetail resource={selected} categories={categories} onClose={closeDetail} />
   </main>;

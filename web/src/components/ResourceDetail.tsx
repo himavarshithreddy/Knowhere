@@ -2,10 +2,14 @@ import { memo, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { createPortal } from "react-dom";
 import { Archive, Download, ExternalLink, Heart, Lock, LockOpen, Trash2, X } from "lucide-react";
-import type { Category, Resource } from "@knowhere/shared";
+import { useNavigate } from "react-router-dom";
+import type { Category, Resource, IntentType } from "@knowhere/shared";
 import { useData } from "../contexts/DataContext";
 import { VaultPinInput } from "./VaultPinInput";
 import { DetailMediaPreview } from "./ResourceMediaPreview";
+import { IntentBadge } from "./IntentBadge";
+import { StatusProgression } from "./StatusProgression";
+import { MilestoneChecklist } from "./MilestoneChecklist";
 import { resourceDisplayTitle } from "../lib/utils";
 import { api } from "../lib/api";
 
@@ -32,22 +36,36 @@ function AttachmentActions({ resource }: { resource: Resource }) {
 }
 
 function DetailEditor({ resource, categories, onClose }: { resource: Resource; categories: Category[]; onClose: () => void }) {
-  const { updateResource, profile, refresh } = useData();
+  const navigate = useNavigate();
+  const { updateResource, profile, refresh, recordView } = useData();
   const [description, setDescription] = useState(resource.description ?? "");
   const [saved, setSaved] = useState(false);
   const [showPinSetup, setShowPinSetup] = useState(false);
   const [setupPin, setSetupPin] = useState("");
   const [setupPinError, setSetupPinError] = useState("");
+  const [title, setTitle] = useState(resource.title || resourceDisplayTitle(resource));
 
   useEffect(() => {
     setDescription(resource.description ?? "");
-  }, [resource.id, resource.description]);
+    setTitle(resource.title || resourceDisplayTitle(resource));
+  }, [resource.id, resource.description, resource.title]);
+
+  useEffect(() => {
+    // Record view when opened
+    recordView(resource.id).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resource.id]);
 
   const persist = async () => {
     if (description === resource.description) return;
     await updateResource(resource.id, { description });
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
+  };
+
+  const persistTitle = async () => {
+    if (title === (resource.title || resourceDisplayTitle(resource))) return;
+    await updateResource(resource.id, { title });
   };
 
   const handleToggleLock = () => {
@@ -73,22 +91,91 @@ function DetailEditor({ resource, categories, onClose }: { resource: Resource; c
   };
 
   return <>
-    <p className="eyebrow hud-meta">{resource.metadata?.siteName ?? resource.type}</p>
-    <h2 id="detail-title">{resourceDisplayTitle(resource)}</h2>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+      <p className="eyebrow hud-meta" style={{ margin: 0 }}>{resource.metadata?.siteName ?? resource.type}</p>
+      <IntentBadge intent={resource.intentType} />
+    </div>
+    <input 
+      id="detail-title"
+      value={title}
+      onChange={e => setTitle(e.target.value)}
+      onBlur={persistTitle}
+      onKeyDown={e => { if (e.key === "Enter") { e.currentTarget.blur(); } }}
+      placeholder="Untitled"
+      style={{ 
+        fontSize: "24px", fontWeight: "bold", background: "transparent", 
+        border: "none", borderBottom: "1px solid transparent", color: "inherit", 
+        padding: 0, width: "100%", margin: "0 0 16px 0", outline: "none",
+        transition: "border-color 0.2s"
+      }}
+      onFocus={e => e.currentTarget.style.borderBottom = "1px solid var(--accent)"}
+      onBlurCapture={e => e.currentTarget.style.borderBottom = "1px solid transparent"}
+    />
     {resource.noteBody && <div className="note-body">{resource.noteBody}</div>}
+
+    {/* Clickable tags */}
+    {(resource.tags ?? []).length > 0 && (
+      <div className="resource-tags" style={{ marginBottom: "12px" }}>
+        {(resource.tags ?? []).map(tag => (
+          <button
+            key={tag}
+            type="button"
+            className="tag-pill"
+            onClick={() => navigate(`/library?tag=${encodeURIComponent(tag)}`)}
+            title={`Filter by ${tag}`}
+          >
+            {tag}
+          </button>
+        ))}
+      </div>
+    )}
     <label className="field">
       <span>Why this matters</span>
       <textarea value={description} onChange={(e) => setDescription(e.target.value)}
         onBlur={persist} rows={4} />
       {saved && <small className="saved">Saved</small>}
     </label>
-    <label className="field">
-      <span>Cluster</span>
-      <select value={resource.categoryId}
-        onChange={(e) => updateResource(resource.id, { categoryId: e.target.value })}>
-        {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-      </select>
-    </label>
+    {(resource as any).aiDescription && (
+      <div className="ai-description" style={{ marginTop: "-8px", marginBottom: "16px", padding: "12px", backgroundColor: "var(--bg-tertiary)", borderRadius: "8px", fontSize: "14px", color: "var(--text-secondary)", borderLeft: "2px solid rgba(168, 85, 247, 0.5)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px", fontSize: "12px", color: "var(--text-primary)", fontWeight: 500 }}>
+           AI Summary
+        </div>
+        {(resource as any).aiDescription}
+      </div>
+    )}
+    <div style={{ display: "flex", gap: "12px" }}>
+      <label className="field" style={{ flex: 1 }}>
+        <span>Cluster</span>
+        <select value={resource.categoryId}
+          onChange={(e) => updateResource(resource.id, { categoryId: e.target.value })}>
+          {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+        </select>
+      </label>
+
+      <label className="field" style={{ flex: 1 }}>
+        <span>Intent</span>
+        <select value={resource.intentType} onChange={e => updateResource(resource.id, { intentType: e.target.value as IntentType })}>
+          <option value="unclassified">Unclassified</option>
+          <option value="knowledge">Knowledge</option>
+          <option value="mission">Mission</option>
+        </select>
+      </label>
+
+      <label className="field" style={{ flex: 1 }}>
+        <span>Status</span>
+        <select value={resource.actionStatus}
+          onChange={(e) => updateResource(resource.id, { actionStatus: e.target.value as any })}>
+          <option value="saved">Saved</option>
+          <option value="reviewed">Reviewed</option>
+          <option value="in_progress">In Progress</option>
+          <option value="applied">Applied</option>
+          <option value="completed">Completed</option>
+          <option value="dormant">Dormant</option>
+          <option value="archived">Archived</option>
+        </select>
+      </label>
+    </div>
+
     <div className="detail-menu">
       <button onClick={handleToggleLock}>
         {resource.locked ? <><LockOpen /> Remove from Vault</> : <><Lock /> Send to Vault</>}
@@ -129,6 +216,8 @@ function DetailEditor({ resource, categories, onClose }: { resource: Resource; c
         <dt>Updated</dt><dd>{new Date(resource.updatedAt).toLocaleString()}</dd>
         {resource.fileName && <><dt>File</dt><dd>{resource.fileName}</dd></>}
         {resource.metadata?.author && <><dt>Author</dt><dd>{resource.metadata.author}</dd></>}
+        <dt>Views</dt><dd>{resource.viewCount}</dd>
+        {resource.lastViewedAt && <><dt>Last Viewed</dt><dd>{new Date(resource.lastViewedAt).toLocaleString()}</dd></>}
       </dl>
     </details>
   </>;

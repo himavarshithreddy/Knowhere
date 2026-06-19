@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Download, GripVertical, Lock, Moon, Plus, Trash2, UserRound } from "lucide-react";
+import { BellRing, Download, GripVertical, Lock, Moon, Plus, Trash2, UserRound } from "lucide-react";
 import { api } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 import { useData } from "../contexts/DataContext";
@@ -23,6 +23,64 @@ export function Settings() {
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean; title: string; description: string; onConfirm: () => void; confirmLabel: string; danger?: boolean;
   }>({ open: false, title: "", description: "", onConfirm: () => {}, confirmLabel: "" });
+
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushStatus, setPushStatus] = useState("");
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.getRegistration().then(reg => {
+        if (reg) {
+          reg.pushManager.getSubscription().then(sub => {
+            setPushEnabled(!!sub);
+          });
+        }
+      });
+    }
+  }, []);
+
+  const togglePush = async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      setPushStatus("Push notifications are not supported in this browser.");
+      return;
+    }
+    setPushStatus("Processing...");
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      if (pushEnabled) {
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          await sub.unsubscribe();
+          await api.unsubscribePush(sub.endpoint);
+        }
+        setPushEnabled(false);
+        setPushStatus("Notifications disabled.");
+      } else {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          setPushStatus("Permission denied.");
+          return;
+        }
+        const { publicKey } = await api.getVapidPublicKey();
+        const padding = '='.repeat((4 - publicKey.length % 4) % 4);
+        const base64 = (publicKey + padding).replace(/\-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+          outputArray[i] = rawData.charCodeAt(i);
+        }
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: outputArray
+        });
+        await api.subscribePush(sub);
+        setPushEnabled(true);
+        setPushStatus("Notifications enabled!");
+      }
+    } catch (err: any) {
+      setPushStatus("Error: " + err.message);
+    }
+  };
 
   usePageSeo({
     title: SEO.settings.title,
@@ -107,6 +165,13 @@ export function Settings() {
       <div className="setting-row"><div><strong>{theme === "dark" ? "Dark mode" : "Light mode"}</strong><span>Use the toggle in the page header to switch themes.</span></div></div>
       <div className="setting-row"><div><strong>Logo preview</strong><span>Full-screen mark for capturing a PNG favicon.</span></div>
         <button type="button" className="button secondary" onClick={() => setLogoPreviewOpen(true)}>Preview logo</button></div>
+    </section>
+    <section className="settings-section"><div className="settings-heading"><BellRing /><div><h2>Notifications</h2><p>Passive reminders for your vault.</p></div></div>
+      <div className="setting-row"><div><strong>Push Notifications</strong><span>Receive daily reminders for forgotten items and overdue missions.</span></div>
+        <button className={`button ${pushEnabled ? 'danger' : 'primary'}`} onClick={togglePush}>
+          {pushEnabled ? 'Disable' : 'Enable'}
+        </button></div>
+      {pushStatus && <p className="status-message" role="status" style={{fontSize: '13px', color: 'var(--muted)', marginTop: '8px'}}>{pushStatus}</p>}
     </section>
     <section className="settings-section"><div className="settings-heading"><Lock /><div><h2>Vault</h2><p>Manage your classified discoveries.</p></div></div>
       <div className="setting-row"><div><strong>Reset Vault PIN</strong><span>Permanently deletes all your locked discoveries. This cannot be undone.</span></div>

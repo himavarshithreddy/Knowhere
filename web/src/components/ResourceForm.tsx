@@ -5,6 +5,7 @@ import { FileText, Image, Link2, LoaderCircle, Lock, LockOpen, NotebookPen, Plus
 import { allowedUploadTypes, MAX_UPLOAD_BYTES, type ExtractedMetadata, type ResourceType } from "@knowhere/shared";
 import { api } from "../lib/api";
 import { useData } from "../contexts/DataContext";
+import { useToast } from "../contexts/ToastContext";
 import { VaultPinInput } from "./VaultPinInput";
 import { BrandMark } from "./BrandMark";
 import { metadataPreviewImage, metadataPreviewText, isSocialPostUrl } from "../lib/preview";
@@ -41,11 +42,13 @@ const deriveTitle = (type: ResourceType, metadata: ExtractedMetadata | undefined
 
 export function ResourceForm({ open, onClose, initialCategory }: Props) {
   const { categories, resources, profile, saveResource, addCategory, uploadProgress, refresh } = useData();
+  const { addToast } = useToast();
   const [type, setType] = useState<ResourceType>("link");
   const [url, setUrl] = useState("");
   const [body, setBody] = useState("");
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [intentType, setIntentType] = useState<string>("unclassified");
   const [file, setFile] = useState<File | null>(null);
   const [metadata, setMetadata] = useState<ExtractedMetadata>();
   const [previewStatus, setPreviewStatus] = useState<PreviewStatus>("idle");
@@ -88,7 +91,7 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
 
   useEffect(() => {
     if (!open) {
-      setType("link"); setUrl(""); setBody(""); setDescription("");
+      setType("link"); setUrl(""); setBody(""); setDescription(""); setIntentType("unclassified");
       setFile(null); setMetadata(undefined); setPreviewStatus("idle"); setPreviewedUrl("");
       setError(""); setStatus("idle"); setCategoryName(""); setCreatingCategory(false);
       setLocked(false); setShowPinSetup(false); setSetupPin(""); setSetupPinError("");
@@ -176,8 +179,8 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!description.trim() || !categoryId) {
-      setError("Add a description and cluster."); return;
+    if (!categoryId) {
+      setError("Add a cluster."); return;
     }
     if (type === "link" && !url.trim()) { setError("Add a URL."); return; }
     if (type === "link") {
@@ -196,7 +199,7 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
 
     setStatus("saving"); setError("");
     try {
-      await saveResource({
+      const savedResource = await saveResource({
         type,
         title: deriveTitle(type, metadataReady ? metadata : undefined, body, description, file),
         description: description.trim(),
@@ -209,6 +212,22 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
         locked
       });
       onClose();
+      
+      addToast({
+        message: "Saved — the AI is organizing it in the background.",
+        type: "success"
+      });
+
+      if (savedResource.tags && savedResource.tags.length > 0) {
+        api.getRelatedResources(savedResource.id).then(res => {
+          if (res.related.length > 0) {
+            addToast({
+              message: `You have ${res.related.length} other items related to these topics.`,
+              type: "info"
+            });
+          }
+        }).catch(err => console.error(err));
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not save. Your entries are still here.");
       setStatus("idle");
@@ -262,7 +281,7 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
                   id: "draft", ownerId: "", type: "pdf", title: file.name.replace(/\.pdf$/i, ""),
                   description: "", categoryId: "", fileName: file.name, favorite: false, archived: false, locked: false,
                   deletedAt: null, createdAt: "", updatedAt: ""
-                }} />}
+                } as any} />}
             </div>}
             
             {type === "link" && previewStatus !== "ready" && <div className={`preview-card skeleton-card${previewStatus === "loading" ? " is-loading" : ""}`}>
@@ -302,6 +321,14 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
                   </button>
                 </div>
               </div>
+            </div>
+
+            <div className="field"><label htmlFor="resource-intent">Classification</label>
+              <select id="resource-intent" value={intentType} onChange={(e) => setIntentType(e.target.value)}>
+                <option value="unclassified">✨ Auto-classify (AI)</option>
+                <option value="knowledge">📚 Knowledge (Reference, Article, etc)</option>
+                <option value="mission">🎯 Mission (Project, Idea, Goal)</option>
+              </select>
             </div>
 
             <div className="field">

@@ -417,7 +417,7 @@ export function Enter() {
 
   useEffect(() => {
     if (user && !loading && appNavigations <= 1) {
-      navigate("/library");
+      navigate("/dashboard");
     }
   }, [user, loading, navigate]);
 
@@ -464,7 +464,7 @@ export function Enter() {
                     collection.
                   </p>
                   <Link
-                    to="/library"
+                    to="/dashboard"
                     className="google-button"
                     style={{ textDecoration: "none" }}
                   >

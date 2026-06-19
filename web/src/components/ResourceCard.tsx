@@ -1,9 +1,11 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { Archive, ExternalLink, FileText, Heart, Image, Link2, LoaderCircle, Lock, MoreHorizontal, NotebookPen, RotateCcw, Trash2, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import type { Category, Resource } from "@knowhere/shared";
 import { ResourceMediaPreview } from "./ResourceMediaPreview";
 import { VaultPinInput } from "./VaultPinInput";
+import { IntentBadge } from "./IntentBadge";
 import { isSocialPostUrl, resourcePreviewUrl } from "../lib/preview";
 import { api } from "../lib/api";
 import { relativeDate, resourceDisplayTitle } from "../lib/utils";
@@ -15,6 +17,7 @@ export function ResourceCard({ resource, category, view, mode, onOpen, onAction 
   resource: Resource; category?: Category; view: "grid" | "list" | "detail"; mode: string;
   onOpen: () => void; onAction: (action: string) => void;
 }) {
+  const navigate = useNavigate();
   const [pinPrompt, setPinPrompt] = useState(false);
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState("");
@@ -85,9 +88,40 @@ export function ResourceCard({ resource, category, view, mode, onOpen, onAction 
       <span className="type-badge"><Icon size={13} /> {typeLabels[resource.type]}</span>
     </div>
     <div className="resource-copy" style={resource.locked ? { filter: "blur(6px)", opacity: 0.5, userSelect: "none" } : undefined}>
-      <div className="resource-topline"><span className="hud-meta">{category?.name ?? "General"}</span><span className="hud-meta">{relativeDate(resource.createdAt)}</span></div>
+      <div className="resource-topline">
+        <IntentBadge intent={resource.intentType} />
+        <span className="hud-meta" style={{ marginLeft: "auto" }}>{category?.name ?? "General"}</span>
+      </div>
       <h3>{resource.locked ? "Encrypted Discovery" : resourceDisplayTitle(resource)}</h3>
       <p className={view === "detail" ? "resource-description-full" : undefined}>{resource.locked ? "Classified. Requires Vault PIN to access." : resource.description}</p>
+      
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "8px" }}>
+        <span className="hud-meta" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span style={{ 
+            display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", 
+            backgroundColor: resource.actionStatus === "completed" ? "var(--success)" : resource.actionStatus === "in_progress" ? "var(--accent)" : "var(--muted)" 
+          }} />
+          {resource.actionStatus.replace("_", " ")}
+        </span>
+        <span className="hud-meta">{relativeDate(resource.createdAt)}</span>
+      </div>
+
+      {!resource.locked && (resource.tags ?? []).length > 0 && (
+        <div className="resource-tags" onClick={e => e.stopPropagation()}>
+          {(resource.tags ?? []).slice(0, 3).map(tag => (
+            <button
+              key={tag}
+              type="button"
+              className="tag-pill"
+              onClick={() => navigate(`/library?tag=${encodeURIComponent(tag)}`)}
+              title={`Filter by ${tag}`}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="resource-actions" onClick={(e) => e.stopPropagation()}>
         {mode === "trash" ? <>
           <button onClick={() => onAction("restore")}><RotateCcw /> Restore</button>

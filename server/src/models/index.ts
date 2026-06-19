@@ -17,7 +17,17 @@ const userSchema = new Schema({
   photoURL: { type: String, default: null },
   onboardingComplete: { type: Boolean, default: false },
   vaultPin: { type: String, sparse: true },
-  preferences: { type: preferencesSchema, default: () => ({}) }
+  preferences: { type: preferencesSchema, default: () => ({}) },
+  pushSubscriptions: {
+    type: [{
+      endpoint: { type: String, required: true },
+      keys: {
+        p256dh: { type: String, required: true },
+        auth: { type: String, required: true }
+      }
+    }],
+    default: []
+  }
 }, { timestamps: true });
 
 export type UserDoc = InferSchemaType<typeof userSchema> & { _id: mongoose.Types.ObjectId; createdAt: Date; updatedAt: Date };
@@ -52,7 +62,8 @@ const resourceSchema = new Schema({
   ownerId: { type: String, required: true },
   type: { type: String, required: true, enum: ["link", "note", "image", "pdf"] },
   title: { type: String, default: "" },
-  description: { type: String, required: true },
+  description: { type: String, default: "" },
+  aiDescription: { type: String },
   categoryId: { type: String, required: true },
   url: String,
   noteBody: String,
@@ -65,11 +76,23 @@ const resourceSchema = new Schema({
   favorite: { type: Boolean, default: false },
   archived: { type: Boolean, default: false },
   locked: { type: Boolean, default: false },
+  intentType: { type: String, enum: ["unclassified", "knowledge", "mission"], default: "unclassified" },
+  actionStatus: { type: String, enum: ["saved", "reviewed", "in_progress", "applied", "completed", "dormant", "archived"], default: "saved" },
+  lastViewedAt: { type: Date, default: null },
+  viewCount: { type: Number, default: 0 },
+  tags: { type: [String], default: [] },
+  lastStatusChangeAt: { type: Date, default: null },
+  targetDate: { type: Date, default: null },
+  milestones: { type: [{ id: String, text: String, completed: { type: Boolean, default: false } }], default: [] },
   deletedAt: { type: Date, default: null }
 }, { timestamps: true });
 
 resourceSchema.index({ userId: 1, createdAt: -1 });
 resourceSchema.index({ deletedAt: 1 });
+resourceSchema.index({ userId: 1, intentType: 1 });
+resourceSchema.index({ userId: 1, actionStatus: 1 });
+resourceSchema.index({ userId: 1, lastViewedAt: 1 });
+resourceSchema.index({ userId: 1, tags: 1 });
 
 export type ResourceDoc = InferSchemaType<typeof resourceSchema> & { _id: mongoose.Types.ObjectId; createdAt: Date; updatedAt: Date };
 export const Resource = mongoose.model("Resource", resourceSchema);

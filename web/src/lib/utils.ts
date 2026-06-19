@@ -23,11 +23,16 @@ export function searchResources(resources: Resource[], query: string, categories
   const needle = query.trim().toLocaleLowerCase();
   if (!needle) return resources;
   const names = new Map(categories.map((category) => [category.id, category.name]));
-  return resources.filter((resource) => [
-    resource.title, resource.metadata?.title, resource.description, resource.url, resource.fileName,
-    resource.noteBody, names.get(resource.categoryId), resource.metadata?.siteName,
-    resource.metadata?.author
-  ].some((value) => value?.toLocaleLowerCase().includes(needle)));
+  return resources.filter((resource) => {
+    const fields = [
+      resource.title, resource.metadata?.title, resource.description, resource.aiDescription, resource.url, resource.fileName,
+      resource.noteBody, names.get(resource.categoryId), resource.metadata?.siteName,
+      resource.metadata?.author, resource.intentType, resource.actionStatus
+    ];
+    if (fields.some((value) => value?.toLocaleLowerCase().includes(needle))) return true;
+    // Also search through tags array
+    return (resource.tags ?? []).some((tag) => tag.toLocaleLowerCase().includes(needle));
+  });
 }
 
 export const relativeDate = (iso: string) => {

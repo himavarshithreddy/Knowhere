@@ -1,7 +1,7 @@
 import { useMemo, type MouseEvent } from "react";
 import { BrandMark } from "./BrandMark";
 import { NavLink, useLocation } from "react-router-dom";
-import { Archive, BookOpen, Heart, Settings, Trash2 } from "lucide-react";
+import { Archive, BookOpen, Compass, Heart, Settings, Target, Trash2 } from "lucide-react";
 import { useData } from "../contexts/DataContext";
 
 const libraryCategoryId = (search: string) => new URLSearchParams(search).get("category");
@@ -18,7 +18,7 @@ export function Sidebar() {
   );
 
   const refreshHome = (event: MouseEvent) => {
-    if (pathname === "/library" && !search) {
+    if (pathname === "/dashboard") {
       event.preventDefault();
       void refresh();
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -31,8 +31,14 @@ export function Sidebar() {
     </NavLink>
 
     <nav className="sidebar-nav">
+      <NavLink to="/dashboard" onClick={refreshHome}>
+        <Compass /> <span>Dashboard</span>
+      </NavLink>
+      <NavLink to="/missions">
+        <Target /> <span>Missions</span>
+      </NavLink>
       <NavLink to="/library" className={collectionActive ? "active" : undefined}>
-        <BookOpen /> <span>Discoveries</span>
+        <BookOpen /> <span>Library</span>
       </NavLink>
       <NavLink to="/favorites"><Heart /> <span>Favorites</span></NavLink>
 

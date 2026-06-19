@@ -5,6 +5,7 @@ import { requireAuth } from "../middleware/auth.js";
 import { Resource, User } from "../models/index.js";
 import { deleteStoredFile, saveUploadedFile } from "../services/storage.js";
 import { resourceToApi } from "../utils/serialize.js";
+import { classifyResource } from "../services/classifier.js";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -22,28 +23,36 @@ export const resourcesRouter = Router();
 resourcesRouter.use(requireAuth);
 
 resourcesRouter.get("/", async (req, res) => {
-  const resources = await Resource.find({ userId: req.auth!.uid }).sort({ createdAt: -1 });
+  const { intentType, actionStatus } = req.query;
+  const filter: any = { userId: req.auth!.uid };
+  if (intentType) filter.intentType = intentType;
+  if (actionStatus) filter.actionStatus = actionStatus;
+
+  const resources = await Resource.find(filter).sort({ createdAt: -1 });
   res.json(resources.map(resourceToApi));
 });
 
 resourcesRouter.post("/", async (req, res) => {
-  const { type, title, description, categoryId, url, noteBody, metadata, locked } = req.body;
-  if (!type || !description?.trim() || !categoryId) {
-    return res.status(400).json({ error: "Add a description and category." });
+  const { type, title, description, categoryId, url, noteBody, metadata, locked, intentType } = req.body;
+  if (!type || !categoryId) {
+    return res.status(400).json({ error: "Add a category." });
   }
   if (type === "link" && !url?.trim()) {
     return res.status(400).json({ error: "Add a URL." });
   }
   if (type !== "link" && !String(title ?? "").trim()) {
-    return res.status(400).json({ error: "Add a title, description, and category." });
+    return res.status(400).json({ error: "Add a title and category." });
   }
 
+  const resolvedTitle = String(title ?? metadata?.title ?? "").trim();
+  const resolvedDesc = String(description ?? "").trim();
+  
   const resource = await Resource.create({
     userId: req.auth!.uid,
     ownerId: req.auth!.uid,
     type,
-    title: String(title ?? metadata?.title ?? "").trim(),
-    description: String(description).trim(),
+    title: resolvedTitle,
+    description: resolvedDesc,
     categoryId,
     url: url ?? undefined,
     noteBody: noteBody ?? undefined,
@@ -51,8 +60,34 @@ resourcesRouter.post("/", async (req, res) => {
     favorite: false,
     archived: false,
     locked: locked === true,
+    intentType: intentType && ["mission", "knowledge", "unclassified"].includes(intentType) ? intentType : "unclassified",
+    actionStatus: "saved",
+    tags: [],
     deletedAt: null
   });
+
+  // Start classification and description generation asynchronously
+  (async () => {
+    try {
+      const classification = await classifyResource(resolvedTitle, resolvedDesc, url, metadata);
+      const updatePayload: any = {
+        tags: classification.tags,
+        ...(classification.aiDescription ? { aiDescription: classification.aiDescription } : {})
+      };
+      
+      // Only override intent if user didn't explicitly set one
+      if (!intentType || intentType === "unclassified") {
+        updatePayload.intentType = classification.intentType;
+      }
+      
+      await Resource.updateOne(
+        { _id: resource._id },
+        { $set: updatePayload }
+      );
+    } catch (err) {
+      console.error("Background classification failed:", err);
+    }
+  })();
 
   await User.updateOne(
     { uid: req.auth!.uid },
@@ -91,11 +126,14 @@ resourcesRouter.patch("/:id", async (req, res) => {
   const resource = await Resource.findOne({ _id: req.params.id, userId: req.auth!.uid });
   if (!resource) return res.status(404).json({ error: "Resource not found." });
 
-  const allowed = ["title", "description", "categoryId", "url", "noteBody", "metadata", "favorite", "archived", "locked", "deletedAt"] as const;
+  const allowed = ["title", "description", "categoryId", "url", "noteBody", "metadata", "favorite", "archived", "locked", "deletedAt", "intentType", "actionStatus", "tags", "targetDate", "milestones"] as const;
   for (const key of allowed) {
     if (req.body[key] !== undefined) {
       if (key === "deletedAt") {
         resource.deletedAt = req.body.deletedAt ? new Date(req.body.deletedAt) : null;
+      } else if (key === "actionStatus" && resource.actionStatus !== req.body.actionStatus) {
+        resource.actionStatus = req.body.actionStatus;
+        resource.lastStatusChangeAt = new Date();
       } else if (key === "title") resource.title = req.body.title;
       else if (key === "description") resource.description = req.body.description;
       else if (key === "categoryId") resource.categoryId = req.body.categoryId;
@@ -105,11 +143,26 @@ resourcesRouter.patch("/:id", async (req, res) => {
       else if (key === "favorite") resource.favorite = req.body.favorite;
       else if (key === "archived") resource.archived = req.body.archived;
       else if (key === "locked") resource.locked = req.body.locked;
+      else if (key === "intentType") resource.intentType = req.body.intentType;
+      else if (key === "tags") resource.tags = req.body.tags;
+      else if (key === "targetDate") (resource as any).targetDate = req.body.targetDate ? new Date(req.body.targetDate) : null;
+      else if (key === "milestones") (resource as any).milestones = req.body.milestones;
     }
   }
 
   await resource.save();
   res.json(resourceToApi(resource));
+});
+
+resourcesRouter.post("/:id/view", async (req, res) => {
+  const resource = await Resource.findOne({ _id: req.params.id, userId: req.auth!.uid });
+  if (!resource) return res.status(404).json({ error: "Resource not found." });
+
+  resource.viewCount += 1;
+  resource.lastViewedAt = new Date();
+  await resource.save();
+
+  res.json({ ok: true, viewCount: resource.viewCount, lastViewedAt: resource.lastViewedAt });
 });
 
 resourcesRouter.delete("/:id", async (req, res) => {

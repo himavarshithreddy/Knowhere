@@ -3,6 +3,9 @@ import { z } from "zod";
 export const resourceTypeSchema = z.enum(["link", "note", "image", "pdf"]);
 export const densitySchema = z.enum(["comfortable", "compact"]);
 
+export const intentTypeSchema = z.enum(["unclassified", "knowledge", "mission"]);
+export const actionStatusSchema = z.enum(["saved", "reviewed", "in_progress", "applied", "completed", "dormant", "archived"]);
+
 export const metadataSchema = z.object({
   title: z.string().max(500).optional(),
   description: z.string().max(2000).optional(),
@@ -17,7 +20,8 @@ export const resourceSchema = z.object({
   ownerId: z.string(),
   type: resourceTypeSchema,
   title: z.string().max(500),
-  description: z.string().trim().min(1).max(2000),
+  description: z.string().trim().max(2000).optional().default(""),
+  aiDescription: z.string().max(2000).optional(),
   categoryId: z.string().min(1),
   url: z.string().url().optional(),
   noteBody: z.string().max(100000).optional(),
@@ -30,6 +34,18 @@ export const resourceSchema = z.object({
   favorite: z.boolean().default(false),
   archived: z.boolean().default(false),
   locked: z.boolean().default(false),
+  intentType: intentTypeSchema.default("unclassified"),
+  actionStatus: actionStatusSchema.default("saved"),
+  lastViewedAt: z.string().nullable().default(null),
+  viewCount: z.number().int().nonnegative().default(0),
+  tags: z.array(z.string()).default([]),
+  lastStatusChangeAt: z.string().nullable().default(null),
+  targetDate: z.string().nullable().optional().default(null),
+  milestones: z.array(z.object({
+    id: z.string(),
+    text: z.string().max(200),
+    completed: z.boolean()
+  })).default([]),
   deletedAt: z.string().nullable().default(null),
   createdAt: z.string(),
   updatedAt: z.string()
@@ -65,6 +81,8 @@ export const userProfileSchema = z.object({
 
 export type Resource = z.infer<typeof resourceSchema>;
 export type ResourceType = z.infer<typeof resourceTypeSchema>;
+export type IntentType = z.infer<typeof intentTypeSchema>;
+export type ActionStatus = z.infer<typeof actionStatusSchema>;
 export type Category = z.infer<typeof categorySchema>;
 export type UserProfile = z.infer<typeof userProfileSchema>;
 export type UserPreferences = z.infer<typeof preferencesSchema>;

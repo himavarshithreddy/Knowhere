@@ -6,14 +6,15 @@ import { useAuth } from "./AuthContext";
 type ResourceInput = {
   type: Resource["type"]; title?: string; description: string; categoryId: string;
   url?: string; noteBody?: string; file?: File; metadata?: Resource["metadata"];
-  enrichMetadataInBackground?: boolean; locked?: boolean;
+  enrichMetadataInBackground?: boolean; locked?: boolean; intentType?: string;
 };
 type DataState = {
   profile: UserProfile | null; categories: Category[]; resources: Resource[];
   loading: boolean; error: string; uploadProgress: number;
   refresh: () => Promise<void>;
-  saveResource: (input: ResourceInput) => Promise<void>;
+  saveResource: (input: ResourceInput) => Promise<Resource>;
   updateResource: (id: string, patch: Partial<Resource>) => Promise<void>;
+  recordView: (id: string) => Promise<void>;
   permanentlyDelete: (resource: Resource) => Promise<void>;
   addCategory: (name: string) => Promise<string>;
   renameCategory: (id: string, name: string) => Promise<void>;
@@ -66,7 +67,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [user, refresh]);
 
   const saveResource = useCallback(async (input: ResourceInput) => {
-    if (!user) return;
+    if (!user) throw new Error("User is not authenticated");
     const created = await api.createResource({
       type: input.type,
       title: input.title ?? "",
@@ -96,6 +97,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           .catch(() => undefined);
       }
       await refresh({ background: true });
+      return saved;
     } catch (error) {
       await api.deleteResource(created.id).catch(() => undefined);
       throw error;
@@ -109,6 +111,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
     updateResource: async (id, patch) => {
       await api.updateResource(id, patch);
       await refresh({ background: true });
+    },
+    recordView: async (id) => {
+      const result = await api.recordView(id);
+      setResources((prev) => prev.map((item) => 
+        item.id === id ? { ...item, viewCount: result.viewCount, lastViewedAt: result.lastViewedAt } : item
+      ));
     },
     permanentlyDelete: async (resource) => {
       await api.deleteResource(resource.id);
