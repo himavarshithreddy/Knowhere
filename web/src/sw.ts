@@ -71,8 +71,7 @@ self.addEventListener('push', (event) => {
     const title = data.title || 'Knowhere';
     const options = {
       body: data.body || '',
-      icon: '/logo-square.svg',
-      badge: '/logo-maskable.svg',
+      badge: '/notification-badge.svg',
       data: { url: data.url || '/' },
       vibrate: [100, 50, 100],
       requireInteraction: true // Keeps notification visible until clicked or dismissed

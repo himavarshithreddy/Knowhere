@@ -36,10 +36,10 @@ export const startPushCron = () => {
             
             if (ai) {
               try {
-                const prompt = `You are Knowhere, a private AI vault. Write a short, motivating, 1-sentence push notification body (max 100 chars) to remind the user of an old resource they saved.
+                const prompt = `You are Knowhere, an AI mission control system. Write a highly compelling, punchy push notification body (1 to 2 short sentences, max 120 characters) to push the user to act on a forgotten resource.
 Resource: "${resourceTitle}"
 Reason it surfaced: "${topTransmission.reason}"
-Make it engaging, mysterious, or highly relevant. Do not include the title in the body. Do not use quotes. Do not use emojis under any circumstances.`;
+Use an urgent, direct, and slightly challenging tone to break their procrastination. Wake them up. Do not include the title in the body. Do not use quotes. Do not use emojis under any circumstances.`;
                 const response = await ai.models.generateContent({ model: "gemini-2.5-flash", contents: prompt, config: { temperature: 0.7 } });
                 if (response.text) body = response.text.trim();
               } catch (e) { /* ignore and fallback */ }
@@ -76,8 +76,8 @@ Make it engaging, mysterious, or highly relevant. Do not include the title in th
 
               if (ai) {
                 try {
-                  const prompt = `You are Knowhere, an AI vault that acts like a mission control. The user has a project/goal named "${mission.title}" that is ${daysLeft === 0 ? "due today" : `overdue by ${Math.abs(daysLeft)} days`}. 
-Write a short, highly motivating, 1-sentence push notification body (max 100 chars) to get them to take action. Do not include the title in the body. Use a tone that is encouraging but holds them accountable. Do not use quotes. Do not use emojis under any circumstances.`;
+                  const prompt = `You are Knowhere, an uncompromising AI mission control. The user has a mission named "${mission.title}" that is ${daysLeft === 0 ? "due today" : `overdue by ${Math.abs(daysLeft)} days`}.
+Write a highly intense, urgent, and punchy push notification body (1 to 2 short sentences, max 120 characters) that holds them strictly accountable, breaks their procrastination, and pushes them to work immediately. Use a commanding, direct tone that makes procrastination uncomfortable. Do not include the title in the body. Do not use quotes. Do not use emojis under any circumstances.`;
                   const response = await ai.models.generateContent({ model: "gemini-2.5-flash", contents: prompt, config: { temperature: 0.7 } });
                   if (response.text) body = response.text.trim();
                 } catch (e) { /* ignore and fallback */ }

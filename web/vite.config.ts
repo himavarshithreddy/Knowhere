@@ -14,7 +14,7 @@ export default defineConfig({
         enabled: true,
         type: "module"
       },
-      includeAssets: ["logo-square.svg", "logo-maskable.svg", "favicon.svg", "knowhere-logo-dark.svg", "knowhere-logo-light.svg"],
+      includeAssets: ["logo-square.svg", "logo-maskable.svg", "favicon.svg", "knowhere-logo-dark.svg", "knowhere-logo-light.svg", "notification-badge.svg"],
       manifest: {
         name: "Knowhere",
         short_name: "Knowhere",
