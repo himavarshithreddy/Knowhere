@@ -6,6 +6,32 @@ export interface RediscoverySuggestion {
   tier: 1 | 2 | 3;
 }
 
+const getResourceContext = (r: ResourceDoc) => {
+  const now = Date.now();
+  const ageMs = now - new Date(r.createdAt).getTime();
+  const dayMs = 24 * 60 * 60 * 1000;
+  const ageDays = Math.floor(ageMs / dayMs);
+  
+  const typeText = r.type === "link" ? "link" 
+                 : r.type === "pdf" ? "document"
+                 : r.type === "image" ? "image" 
+                 : "note";
+                 
+  const tagsText = r.tags && r.tags.length > 0 
+    ? `tagged with [${r.tags.slice(0, 3).join(", ")}]` 
+    : "without tags";
+    
+  let ageDescription = "recently";
+  if (ageDays > 0) {
+    if (ageDays === 1) ageDescription = "yesterday";
+    else if (ageDays < 7) ageDescription = `${ageDays} days ago`;
+    else if (ageDays < 30) ageDescription = `${Math.floor(ageDays / 7)} weeks ago`;
+    else ageDescription = `${Math.floor(ageDays / 30)} months ago`;
+  }
+  
+  return { typeText, tagsText, ageDescription };
+};
+
 export const getTieredRecommendations = async (userId: string): Promise<RediscoverySuggestion[]> => {
   const resources = await Resource.find({ userId, deletedAt: null, archived: false }).lean() as ResourceDoc[];
   const interactions = await InteractionEvent.find({ userId }).lean();
@@ -35,7 +61,7 @@ export const getTieredRecommendations = async (userId: string): Promise<Rediscov
       if (matching && !suggestions.some(x => String(x.resource._id) === String(matching._id))) {
         suggestions.push({
           resource: matching,
-          reason: `You've searched for "${s.query}" ${timesSearched} times. Pin this permanently?`,
+          reason: `You've searched for "${s.query}" ${timesSearched} times recently. Pin this permanently?`,
           tier: 1
         });
       }
@@ -52,9 +78,10 @@ export const getTieredRecommendations = async (userId: string): Promise<Rediscov
     if (r.intentType === ("idea" as any) && ageMs > elevenMonthsMs) {
       const overlap = r.tags?.some(t => recentTags.has(t));
       if (overlap) {
+        const { typeText, tagsText, ageDescription } = getResourceContext(r);
         suggestions.push({
           resource: r,
-          reason: "This old idea overlaps with your current interests. Time to resurrect it?",
+          reason: `This old ${typeText} idea was saved ${ageDescription} ${tagsText} and matches your recent interest tags. Resurrect it?`,
           tier: 2
         });
         continue;
@@ -64,9 +91,10 @@ export const getTieredRecommendations = async (userId: string): Promise<Rediscov
     // Inactivity Recovery: > 90 days, 0 views
     const hasOpen = interactions.some(i => String(i.resourceId) === String(r._id) && i.type === "open");
     if (ageMs > ninetyDaysMs && !hasOpen) {
+      const { typeText, tagsText, ageDescription } = getResourceContext(r);
       suggestions.push({
         resource: r,
-        reason: "You planned to review this 3 months ago. Still interested?",
+        reason: `You saved this ${typeText} ${tagsText} ${ageDescription} and have never opened or reviewed it.`,
         tier: 2
       });
       continue;
@@ -83,9 +111,10 @@ export const getTieredRecommendations = async (userId: string): Promise<Rediscov
       const resourceInteractions = interactions.filter(i => String(i.resourceId) === String(r._id));
       const hasUsed = resourceInteractions.some(i => i.type === "use" || i.type === "build" || i.type === "complete");
       if (!hasUsed && resourceInteractions.length > 0) {
+        const { typeText, tagsText, ageDescription } = getResourceContext(r);
         suggestions.push({
           resource: r,
-          reason: "You saved and viewed this, but never used it. Knowledge is decaying.",
+          reason: `You saved and viewed this ${typeText} ${tagsText} ${ageDescription}, but never applied, built, or completed it. Knowledge is decaying.`,
           tier: 3
         });
       }
@@ -98,9 +127,15 @@ export const getTieredRecommendations = async (userId: string): Promise<Rediscov
 export const getDailyFallbackNotification = async (userId: string): Promise<RediscoverySuggestion | null> => {
   const recs = await getTieredRecommendations(userId);
   if (recs.length > 0) {
-    // Return the highest priority (Tier 1 > Tier 2 > Tier 3)
+    // Sort by tier to find the highest priority (lowest tier number)
     recs.sort((a, b) => a.tier - b.tier);
-    return recs[0];
+    const highestPriorityTier = recs[0].tier;
+    
+    // Gather all recommendations in this top tier
+    const topTierRecs = recs.filter(r => r.tier === highestPriorityTier);
+    
+    // Pick a random one from the top tier
+    return topTierRecs[Math.floor(Math.random() * topTierRecs.length)];
   }
   
   // Ultimate Fallback: Just return a random unread resource
@@ -109,9 +144,19 @@ export const getDailyFallbackNotification = async (userId: string): Promise<Redi
   const unread = resources.filter(r => !interactions.some(i => String(i.resourceId) === String(r._id)));
   if (unread.length > 0) {
     const random = unread[Math.floor(Math.random() * unread.length)];
+    const { typeText, tagsText, ageDescription } = getResourceContext(random);
+    
+    const templates = [
+      `A forgotten ${typeText} you saved ${ageDescription} ${tagsText}. Time to review?`,
+      `This unread ${typeText} ${tagsText} was captured ${ageDescription}. Don't let it drift away.`,
+      `You hoarded this ${typeText} ${ageDescription}. Let's turn it into active knowledge.`,
+      `A random discovery from your vault saved ${ageDescription} ${tagsText} with 0 opens.`
+    ];
+    const reason = templates[Math.floor(Math.random() * templates.length)];
+    
     return {
       resource: random,
-      reason: "A random discovery from your unread vault.",
+      reason,
       tier: 3
     };
   }

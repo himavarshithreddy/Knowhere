@@ -64,12 +64,27 @@ Write a highly intense, urgent, and punchy push notification body (1 to 2 short 
     
     if (ai) {
       try {
+        const styles = [
+          "Phrase this as a direct, slightly sarcastic question about why they haven't touched this yet.",
+          "Phrase this as a commanding statement highlighting the risk of letting this knowledge go to waste.",
+          "Phrase this as a short, high-energy prompt forcing them to act right now.",
+          "Phrase this as a brief reality check pointing out exactly how much time has passed since they hoarded it."
+        ];
+        const randomStyle = styles[Math.floor(Math.random() * styles.length)];
+
         const prompt = `You are Nebula, an AI intelligence layer powering a contextual recommendation system for Knowhere. Write a highly compelling, punchy push notification body (1 to 2 short sentences, max 120 characters) to push the user to act.
-Resource: "${resourceTitle}"
-Nebula Reason: "${fallback.reason}"
+
+Resource Title: "${resourceTitle}"
+Nebula Context: "${fallback.reason}"
 Tier: ${fallback.tier}
-Use an urgent, direct, and slightly challenging tone to break their procrastination. Wake them up. Do not include the title in the body. Do not use quotes. Do not use emojis under any circumstances.`;
-        const response = await ai.models.generateContent({ model: "gemini-2.5-flash", contents: prompt, config: { temperature: 0.7 } });
+
+Instructions:
+1. Use the specific facts provided in the "Nebula Context" (such as whether it is a link, note, image, or document, how long ago it was saved, and any tags) to tailor the notification specifically to this item.
+2. ${randomStyle}
+3. Use an urgent, direct, and slightly challenging tone to break their procrastination. Wake them up.
+4. Do not include the resource title in the body.
+5. Do not use quotes or emojis under any circumstances.`;
+        const response = await ai.models.generateContent({ model: "gemini-2.5-flash", contents: prompt, config: { temperature: 0.85 } });
         if (response.text) body = response.text.trim();
       } catch (e) { /* ignore and fallback */ }
     }
