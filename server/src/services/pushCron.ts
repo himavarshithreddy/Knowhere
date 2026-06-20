@@ -60,6 +60,10 @@ Write a highly intense, urgent, and punchy push notification body (1 to 2 short 
   const fallback = await getDailyFallbackNotification(userId);
   if (fallback) {
     const resourceTitle = fallback.resource.title || fallback.resource.metadata?.title || "this forgotten item";
+    const resourceDesc = fallback.resource.description 
+      || fallback.resource.aiDescription 
+      || fallback.resource.metadata?.description 
+      || "";
     let body = fallback.reason;
     
     if (ai) {
@@ -72,19 +76,36 @@ Write a highly intense, urgent, and punchy push notification body (1 to 2 short 
         ];
         const randomStyle = styles[Math.floor(Math.random() * styles.length)];
 
+        const vibes = [
+          "Vibe constraint: Aggressive accountability. Challenge them directly on why they hoarded this.",
+          "Vibe constraint: Socratic questioning. Make them reflect on whether this resource is still worth keeping or if it is dead weight.",
+          "Vibe constraint: High-intensity enthusiasm. Fire them up about the potential of what they can build or learn from this.",
+          "Vibe constraint: Pragmatic realism. Remind them that reviewing this now takes less than 3 minutes, whereas hoarding it forever is a mental tax.",
+          "Vibe constraint: Curiosity gap. Focus on what they might have forgotten or what mystery lies inside this resource.",
+          "Vibe constraint: Intent alignment. Ask if their current projects could benefit from this specific resource right now.",
+          "Vibe constraint: Cognitive relief. Emphasize how satisfying it will feel to check this off their mental backlog.",
+          "Vibe constraint: Uncompromising focus. Force them to choose between opening it now or deleting it from their vault."
+        ];
+        const randomVibe = vibes[Math.floor(Math.random() * vibes.length)];
+        const entropySeed = Math.random().toString(36).substring(7);
+
         const prompt = `You are Nebula, an AI intelligence layer powering a contextual recommendation system for Knowhere. Write a highly compelling, punchy push notification body (1 to 2 short sentences, max 120 characters) to push the user to act.
 
 Resource Title: "${resourceTitle}"
+Resource Description: "${resourceDesc}"
 Nebula Context: "${fallback.reason}"
 Tier: ${fallback.tier}
+Entropy Seed: "${entropySeed}"
 
 Instructions:
-1. Use the specific facts provided in the "Nebula Context" (such as whether it is a link, note, image, or document, how long ago it was saved, and any tags) to tailor the notification specifically to this item.
-2. ${randomStyle}
-3. Use an urgent, direct, and slightly challenging tone to break their procrastination. Wake them up.
-4. Do not include the resource title in the body.
-5. Do not use quotes or emojis under any circumstances.`;
-        const response = await ai.models.generateContent({ model: "gemini-2.5-flash", contents: prompt, config: { temperature: 0.85 } });
+1. Use the specific facts provided in the "Nebula Context" to tailor the notification specifically to this item.
+2. Focus heavily on the Resource Title and Resource Description to construct your message. Use concrete details from what this resource is actually about (from its description) to make the motivation highly specific and relevant. Avoid generic statements or relying heavily on tags.
+3. ${randomStyle}
+4. ${randomVibe}
+5. Use an urgent, direct, and slightly challenging tone to break their procrastination. Wake them up.
+6. Do not include the resource title in the body.
+7. Do not use quotes or emojis under any circumstances.`;
+        const response = await ai.models.generateContent({ model: "gemini-2.5-flash", contents: prompt, config: { temperature: 0.95 } });
         if (response.text) body = response.text.trim();
       } catch (e) { /* ignore and fallback */ }
     }
