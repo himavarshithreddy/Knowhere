@@ -96,3 +96,5 @@ resourceSchema.index({ userId: 1, tags: 1 });
 
 export type ResourceDoc = InferSchemaType<typeof resourceSchema> & { _id: mongoose.Types.ObjectId; createdAt: Date; updatedAt: Date };
 export const Resource = mongoose.model("Resource", resourceSchema);
+
+export * from "./EventLog.js";

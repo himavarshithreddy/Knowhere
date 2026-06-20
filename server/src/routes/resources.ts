@@ -2,7 +2,7 @@ import { Router, type NextFunction, type Request, type Response } from "express"
 import multer from "multer";
 import { allowedUploadTypes, MAX_UPLOAD_BYTES } from "@knowhere/shared";
 import { requireAuth } from "../middleware/auth.js";
-import { Resource, User } from "../models/index.js";
+import { Resource, User, InteractionEvent } from "../models/index.js";
 import { deleteStoredFile, saveUploadedFile } from "../services/storage.js";
 import { resourceToApi } from "../utils/serialize.js";
 import { classifyResource } from "../services/classifier.js";
@@ -65,6 +65,8 @@ resourcesRouter.post("/", async (req, res) => {
     tags: [],
     deletedAt: null
   });
+
+  InteractionEvent.create({ userId: req.auth!.uid, resourceId: resource._id, type: "save" }).catch(console.error);
 
   // Start classification and description generation asynchronously
   (async () => {
@@ -131,9 +133,15 @@ resourcesRouter.patch("/:id", async (req, res) => {
     if (req.body[key] !== undefined) {
       if (key === "deletedAt") {
         resource.deletedAt = req.body.deletedAt ? new Date(req.body.deletedAt) : null;
+        if (req.body.deletedAt) InteractionEvent.create({ userId: req.auth!.uid, resourceId: resource._id, type: "trash" }).catch(console.error);
       } else if (key === "actionStatus" && resource.actionStatus !== req.body.actionStatus) {
         resource.actionStatus = req.body.actionStatus;
         resource.lastStatusChangeAt = new Date();
+        if (req.body.actionStatus === "completed") {
+          InteractionEvent.create({ userId: req.auth!.uid, resourceId: resource._id, type: "complete" }).catch(console.error);
+        } else if (req.body.actionStatus === "in_progress") {
+          InteractionEvent.create({ userId: req.auth!.uid, resourceId: resource._id, type: "build" }).catch(console.error);
+        }
       } else if (key === "title") resource.title = req.body.title;
       else if (key === "description") resource.description = req.body.description;
       else if (key === "categoryId") resource.categoryId = req.body.categoryId;
@@ -141,7 +149,10 @@ resourcesRouter.patch("/:id", async (req, res) => {
       else if (key === "noteBody") resource.noteBody = req.body.noteBody;
       else if (key === "metadata") resource.metadata = req.body.metadata;
       else if (key === "favorite") resource.favorite = req.body.favorite;
-      else if (key === "archived") resource.archived = req.body.archived;
+      else if (key === "archived") {
+        resource.archived = req.body.archived;
+        if (req.body.archived) InteractionEvent.create({ userId: req.auth!.uid, resourceId: resource._id, type: "archive" }).catch(console.error);
+      }
       else if (key === "locked") resource.locked = req.body.locked;
       else if (key === "intentType") resource.intentType = req.body.intentType;
       else if (key === "tags") resource.tags = req.body.tags;
@@ -161,6 +172,9 @@ resourcesRouter.post("/:id/view", async (req, res) => {
   resource.viewCount += 1;
   resource.lastViewedAt = new Date();
   await resource.save();
+
+  const viewType = req.body.type || "open";
+  InteractionEvent.create({ userId: req.auth!.uid, resourceId: resource._id, type: viewType }).catch(console.error);
 
   res.json({ ok: true, viewCount: resource.viewCount, lastViewedAt: resource.lastViewedAt });
 });

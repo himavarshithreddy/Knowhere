@@ -14,7 +14,7 @@ type DataState = {
   refresh: () => Promise<void>;
   saveResource: (input: ResourceInput) => Promise<Resource>;
   updateResource: (id: string, patch: Partial<Resource>) => Promise<void>;
-  recordView: (id: string) => Promise<void>;
+  recordView: (id: string, type?: string) => Promise<void>;
   permanentlyDelete: (resource: Resource) => Promise<void>;
   addCategory: (name: string) => Promise<string>;
   renameCategory: (id: string, name: string) => Promise<void>;
@@ -106,18 +106,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [user, refresh]);
 
+  const recordView = useCallback(async (id: string, type?: string) => {
+    const { viewCount, lastViewedAt } = await api.recordView(id, type);
+    setResources((prev) => prev.map((item) => 
+      item.id === id ? { ...item, viewCount, lastViewedAt } : item
+    ));
+  }, []);
+
   const value = useMemo<DataState>(() => ({
     profile, categories, resources, loading, error, uploadProgress, refresh, saveResource,
     updateResource: async (id, patch) => {
       await api.updateResource(id, patch);
       await refresh({ background: true });
     },
-    recordView: async (id) => {
-      const result = await api.recordView(id);
-      setResources((prev) => prev.map((item) => 
-        item.id === id ? { ...item, viewCount: result.viewCount, lastViewedAt: result.lastViewedAt } : item
-      ));
-    },
+    recordView,
     permanentlyDelete: async (resource) => {
       await api.deleteResource(resource.id);
       await refresh();

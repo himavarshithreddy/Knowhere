@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useState, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { createPortal } from "react-dom";
 import { Archive, Download, ExternalLink, Heart, Lock, LockOpen, Trash2, X } from "lucide-react";
@@ -22,14 +22,15 @@ const DetailMedia = memo(function DetailMedia({ resource }: { resource: Resource
   && prev.resource.url === next.resource.url);
 
 function AttachmentActions({ resource }: { resource: Resource }) {
+  const { recordView } = useData();
   if (!resource.downloadUrl || (resource.type !== "image" && resource.type !== "pdf")) return null;
   const label = resource.type === "pdf" ? "PDF" : "image";
 
   return <div className="detail-attachment-bar">
-    <a className="button secondary" href={resource.downloadUrl} target="_blank" rel="noreferrer">
+    <a className="button secondary" href={resource.downloadUrl} target="_blank" rel="noreferrer" onClick={() => recordView(resource.id, "use")}>
       Open {label} <ExternalLink size={15} />
     </a>
-    <a className="button secondary" href={resource.downloadUrl} download={resource.fileName ?? undefined}>
+    <a className="button secondary" href={resource.downloadUrl} download={resource.fileName ?? undefined} onClick={() => recordView(resource.id, "use")}>
       <Download size={15} /> Download
     </a>
   </div>;
@@ -223,14 +224,60 @@ function DetailEditor({ resource, categories, onClose }: { resource: Resource; c
   </>;
 }
 
+function SimilarDiscoveries({ resource, onClose }: { resource: Resource; onClose: () => void }) {
+  const { resources, recordView } = useData();
+  const navigate = useNavigate();
+  
+  const similar = useMemo(() => {
+    if (!resource.tags || resource.tags.length === 0) return [];
+    return resources
+      .filter(r => r.id !== resource.id && !r.deletedAt && !r.archived && !r.locked)
+      .filter(r => r.tags?.some(t => resource.tags!.includes(t)))
+      .sort((a, b) => {
+        const overlapA = a.tags!.filter(t => resource.tags!.includes(t)).length;
+        const overlapB = b.tags!.filter(t => resource.tags!.includes(t)).length;
+        return overlapB - overlapA;
+      })
+      .slice(0, 3);
+  }, [resource, resources]);
+
+  if (similar.length === 0) return null;
+
+  return (
+    <div style={{ marginTop: "24px", paddingTop: "24px", borderTop: "1px solid var(--border)" }}>
+      <h3 style={{ fontSize: "16px", marginBottom: "12px" }}>Similar Discoveries</h3>
+      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        {similar.map((r: any) => (
+          <button 
+            key={r.id}
+            className="secondary" 
+            style={{ textAlign: "left", padding: "12px", height: "auto", display: "block" }}
+            onClick={() => {
+              recordView(r.id, "rediscover_click");
+              navigate(`/library?resource=${r.id}`);
+            }}
+          >
+            <div style={{ fontWeight: 500, marginBottom: "4px" }}>{r.title || r.metadata?.title || "Untitled"}</div>
+            <div style={{ fontSize: "12px", color: "var(--muted)", display: "flex", gap: "8px" }}>
+              <span>{r.type}</span>
+              {r.tags && r.tags.length > 0 && <span>• {r.tags[0]}</span>}
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ResourceDetail({ resource, categories, onClose }: { resource: Resource | null; categories: Category[]; onClose: () => void }) {
+  const { recordView } = useData();
   return <AnimatePresence>{resource && <motion.div className="dialog-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
     <motion.section className="detail-panel" role="dialog" aria-modal="true" aria-labelledby="detail-title"
       initial={{ x: 32, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 32, opacity: 0 }}>
       <header>
         <span className="type-badge">{resource.type}</span>
         <div className="detail-actions">
-          {resource.url && <a className="button secondary" href={resource.url} target="_blank" rel="noreferrer">Open original <ExternalLink size={15} /></a>}
+          {resource.url && <a className="button secondary" href={resource.url} target="_blank" rel="noreferrer" onClick={() => recordView(resource.id, "use")}>Open original <ExternalLink size={15} /></a>}
           <button className="icon-button" onClick={onClose} aria-label="Close"><X /></button>
         </div>
       </header>
@@ -241,6 +288,9 @@ export function ResourceDetail({ resource, categories, onClose }: { resource: Re
         <div className="detail-content">
           <DetailEditor resource={resource} categories={categories} onClose={onClose} />
         </div>
+        
+        {/* V4 Similar Discoveries */}
+        <SimilarDiscoveries resource={resource} onClose={onClose} />
       </div>
     </motion.section>
   </motion.div>}</AnimatePresence>;

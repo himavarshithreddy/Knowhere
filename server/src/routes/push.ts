@@ -2,6 +2,7 @@ import { Router } from "express";
 import webpush from "web-push";
 import { requireAuth } from "../middleware/auth.js";
 import { User } from "../models/index.js";
+import { generatePushPayloadsForUser } from "../services/pushCron.js";
 import { config } from "../config.js";
 
 // Initialize web-push with VAPID keys
@@ -104,4 +105,38 @@ pushRouter.post("/test", async (req, res) => {
   }
 
   res.json({ ok: true, sentCount, failCount });
+});
+
+pushRouter.post("/trigger-daily", async (req, res) => {
+  const user = await User.findOne({ uid: req.auth!.uid });
+  if (!user) return res.status(404).json({ error: "User not found." });
+
+  if (!user.pushSubscriptions || user.pushSubscriptions.length === 0) {
+    return res.status(400).json({ error: "No active push subscriptions found." });
+  }
+
+  const toSend = await generatePushPayloadsForUser(user.uid);
+  
+  if (toSend.length === 0) {
+    return res.json({ ok: true, message: "No recommendations to send.", sentCount: 0 });
+  }
+
+  let sentCount = 0;
+  for (const notif of toSend) {
+    const payload = JSON.stringify(notif);
+    for (let i = user.pushSubscriptions.length - 1; i >= 0; i--) {
+      const sub = user.pushSubscriptions[i];
+      try {
+        await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys as any }, payload);
+        sentCount++;
+      } catch (err: any) {
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          user.pushSubscriptions.splice(i, 1);
+        }
+      }
+    }
+  }
+
+  await user.save();
+  res.json({ ok: true, sentCount, sentPayloads: toSend });
 });

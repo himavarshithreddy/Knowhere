@@ -25,7 +25,7 @@ No passwords to remember. No cluttered UI. Just your universe of information, pe
 ## Why Knowhere?
 
 - **Simplicity by Design:** A fluid, app-like experience that gets out of your way and lets you focus on your content.
-- **AI-Powered Intelligence:** Say goodbye to manual tagging. Gemini AI auto-analyzes, categorizes, and summarizes everything you save.
+- **V4 Intelligence Engine:** The system actively watches what you search for and build, surfacing exactly the right knowledge right when you need it.
 - **Uncompromising Motivation:** Stop procrastinating. Set Missions and let Knowhere send you intense push notifications to force you into action.
 - **Privacy First:** Your data is yours. Protected by enterprise-grade security and accessible only via your unique access code.
 - **Instant Access Anywhere:** Seamlessly transition between desktop and mobile. Your collection is always just a set of Coords away.
@@ -35,14 +35,17 @@ No passwords to remember. No cluttered UI. Just your universe of information, pe
 ### Zero-Friction AI Tagging
 Save anything. Drop links, write quick notes, or upload images. Knowhere's AI automatically analyzes, tags, and groups your resources. No manual organization required.
 
-### Intelligence Dashboard
-A dynamic, AI-generated dashboard offering deep insights, visual clusters, and analytics on your knowledge universe.
+### V4 Intelligence Layer & Dashboard
+Not just a dashboard of vanity metrics. Knowhere tracks your *Knowledge Activation Rate*, monitoring how effectively you turn saved links into completed projects, resurrected ideas, and true action.
+
+### Just-in-Time Surfacing
+Working on a new project? Knowhere watches your search intent and immediately surfaces similar discoveries from your vault. It remembers what you forgot, so you don't have to.
 
 ### Intent-Based Missions
 Set specific missions for your saved content. Turn a chaotic inbox into a targeted action plan.
 
 ### Uncompromising Push Notifications
-Knowhere doesn't let you forget. It sends intense, motivating push notifications to break your procrastination habits and help you achieve your missions.
+Knowhere doesn't let you forget. Tiered recommendation algorithms track knowledge decay, breaking your procrastination habits with intense push notifications.
 
 ### Instant "Coords" Access
 Jump into your collection from any device using just your unique Coords (e.g., `AB-1234`). No more forgotten passwords or clunky login screens.

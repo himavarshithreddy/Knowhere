@@ -6,6 +6,7 @@ import type { Category, Resource } from "@knowhere/shared";
 import { useData } from "../contexts/DataContext";
 import { useToast } from "../contexts/ToastContext";
 import { searchResources, resourceDisplayTitle } from "../lib/utils";
+import { api } from "../lib/api";
 import { resourcePreviewUrl } from "../lib/preview";
 import { CategoryCard } from "../components/CategoryCard";
 import { BrandMark } from "../components/BrandMark";
@@ -155,6 +156,16 @@ export function Library({ mode = "library" }: { mode?: "library" | "favorites" |
       return b.createdAt.localeCompare(a.createdAt);
     });
   }, [baseResources, effectiveCategory, query, sort, categories, selectedTags, intentFilter]);
+
+  // V4 Intelligence: Track searches
+  useEffect(() => {
+    if (query.trim().length > 0) {
+      const timeoutId = setTimeout(() => {
+        api.trackSearch(query, visible.length).catch(console.error);
+      }, 1500); // 1.5s debounce
+      return () => clearTimeout(timeoutId);
+    }
+  }, [query, visible.length]);
 
   const visibleCategories = useMemo(() => [...categories].sort((a, b) => {
     if (sort === "az") return a.name.localeCompare(b.name);

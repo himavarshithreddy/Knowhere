@@ -1,23 +1,25 @@
 import { useEffect, useState } from "react";
-import { Activity, CheckCircle, PieChart } from "lucide-react";
+import { Activity, CheckCircle, PieChart, AlertCircle, TrendingUp, Compass, Archive, Flame } from "lucide-react";
 import { api } from "../lib/api";
 
-type StatsData = {
-  total: number;
-  byIntent: Record<string, number>;
-  byStatus: Record<string, number>;
-  actionRate: number;
-  completionRate: number;
+type AdvancedStats = {
+  savedCount: number;
+  rediscoverClicks: number;
+  projectsStarted: number;
+  projectsCompleted: number;
   forgottenCount: number;
+  dormantIdeas: number;
+  activationRate: number;
+  topInterests: string[];
 };
 
 export function StatsPanel() {
-  const [stats, setStats] = useState<StatsData | null>(null);
+  const [stats, setStats] = useState<AdvancedStats | null>(null);
 
   useEffect(() => {
     let mounted = true;
     api.getStats().then(res => {
-      if (mounted) setStats(res);
+      if (mounted) setStats(res as any);
     }).catch(console.error);
     return () => { mounted = false; };
   }, []);
@@ -29,51 +31,57 @@ export function StatsPanel() {
       background: "var(--bg-tertiary)",
       borderRadius: "16px",
       padding: "24px",
-      display: "flex",
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
       gap: "24px",
-      flexWrap: "wrap",
       border: "1px solid var(--border)"
     }}>
-      <div style={{ flex: "1 1 200px" }}>
+      <div className="stat-card">
         <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-secondary)", marginBottom: "8px" }}>
-          <Activity size={16} /> Action Rate
+          <Flame size={16} /> Activation Rate
         </div>
         <div style={{ fontSize: "32px", fontWeight: "bold", color: "var(--accent)" }}>
-          {Math.round(stats.actionRate * 100)}%
+          {stats.activationRate}%
         </div>
         <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)" }}>
-          Of {stats.total} items have been reviewed or started.
+          Saved knowledge converted into action.
         </p>
       </div>
 
-      <div style={{ flex: "1 1 200px" }}>
+      <div className="stat-card">
         <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-secondary)", marginBottom: "8px" }}>
-          <CheckCircle size={16} /> Completion Rate
+          <Compass size={16} /> Rediscovered
         </div>
         <div style={{ fontSize: "32px", fontWeight: "bold", color: "var(--success)" }}>
-          {Math.round(stats.completionRate * 100)}%
+          {stats.rediscoverClicks}
         </div>
         <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)" }}>
-          Of missions have been achieved.
+          Old resources opened via intelligence.
+        </p>
+      </div>
+      
+      <div className="stat-card">
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-secondary)", marginBottom: "8px" }}>
+          <CheckCircle size={16} /> Projects Completed
+        </div>
+        <div style={{ fontSize: "32px", fontWeight: "bold", color: "var(--text-primary)" }}>
+          {stats.projectsCompleted}
+        </div>
+        <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)" }}>
+          Total out of {stats.projectsStarted} started.
         </p>
       </div>
 
-      <div style={{ flex: "1 1 200px" }}>
+      <div className="stat-card">
         <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-secondary)", marginBottom: "8px" }}>
-          <PieChart size={16} /> Knowledge Vault
+          <Archive size={16} /> Hoarded Items
         </div>
-        <div style={{ display: "flex", gap: "12px", fontSize: "14px", flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#4dabf7" }}></span>
-            {stats.byIntent.knowledge || 0} Knowledge
+        <div style={{ display: "flex", gap: "16px", fontSize: "18px", fontWeight: "500", color: "var(--text-primary)" }}>
+          <div>
+             <span style={{ color: "var(--danger)" }}>{stats.forgottenCount}</span> Forgotten
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#b197fc" }}></span>
-            {stats.byIntent.project || 0} Projects
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#ffd43b" }}></span>
-            {stats.byIntent.idea || 0} Ideas
+          <div>
+            <span style={{ color: "var(--warning)" }}>{stats.dormantIdeas}</span> Dormant Ideas
           </div>
         </div>
       </div>
