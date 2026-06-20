@@ -289,7 +289,7 @@ export function ResourceDetail({ resource, categories, onClose }: { resource: Re
           <DetailEditor resource={resource} categories={categories} onClose={onClose} />
         </div>
         
-        {/* V4 Similar Discoveries */}
+        {/* Similar Discoveries */}
         <SimilarDiscoveries resource={resource} onClose={onClose} />
       </div>
     </motion.section>

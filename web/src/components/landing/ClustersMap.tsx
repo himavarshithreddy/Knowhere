@@ -114,7 +114,7 @@ export function ClustersMap() {
     >
       <div className="section-header">
 
-        <span className="section-label">Intelligence Dashboard</span>
+        <span className="section-label">Nebula Dashboard</span>
         <h2 className="section-title">Watch your mind map itself</h2>
         <p className="section-subtitle">
           Unlock deep AI analysis and insights. Watch your knowledge dynamically map itself into intelligent clusters.

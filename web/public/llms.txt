@@ -7,7 +7,7 @@ Knowhere is a private, AI-powered knowledge vault designed to store links, video
 1. **Passwordless "Coords"**: Users log in securely using unique alphanumeric identifiers (e.g., AB-1234) rather than traditional passwords.
 2. **Zero-Friction Collection & AI Tagging**: Users drop content into their inbox. AI automatically analyzes the content, generates summaries, identifies the source, and tags it appropriately.
 3. **Intent-Based Missions**: Users can set 'Missions' (goals or objectives) for their saved content.
-4. **V4 Intelligence Layer**: Knowhere isn't just a bookmark manager; it's an intelligence engine. It tracks the user's "Knowledge Activation Rate" (how often saved items become action) and tracks detailed intent/behavior metrics.
+4. **Nebula (Intelligence Layer)**: Knowhere isn't just a bookmark manager; it features Nebula, an intelligence layer that tracks the user's "Knowledge Activation Rate" (how often saved items become action) and tracks detailed intent/behavior metrics.
 5. **Just-In-Time Surfacing**: Knowhere tracks your real-time searches and project creations to dynamically surface past discoveries exactly when they're relevant, curing digital hoarding.
 6. **Tiered Anti-Procrastination Push Notifications**: Leveraging the intelligence layer, Knowhere sends uncompromising, intense Push Notifications to break procrastination habits, based on memory decay and missed opportunities.
 

@@ -124,6 +124,7 @@ export const api = {
   subscribePush: (subscription: PushSubscription) => request<{ ok: boolean }>("/api/push/subscribe", { method: "POST", body: JSON.stringify(subscription) }),
   unsubscribePush: (endpoint: string) => request<{ ok: boolean }>("/api/push/unsubscribe", { method: "POST", body: JSON.stringify({ endpoint }) }),
   sendTestPush: () => request<{ ok: boolean; sentCount: number; failCount: number }>("/api/push/test", { method: "POST" }),
+  triggerDailyPush: () => request<{ ok: boolean; sentCount: number; failCount: number }>("/api/push/trigger-daily", { method: "POST" }),
 
   uploadFile(resourceId: string, file: File, onProgress: (value: number) => void) {
     return new Promise<Resource>((resolve, reject) => {

@@ -74,8 +74,8 @@ export const generateDashboardIntelligence = async (userId: string): Promise<any
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: `You are Knowhere's elite Intelligence Engine.
-Analyze these V4 Memory, Intent, and Action analytics to generate a structured insights report.
+      contents: `You are Nebula, Knowhere's elite intelligence layer.
+Analyze these Memory, Intent, and Action analytics to generate a structured insights report.
 
 Raw Stats:
 ${JSON.stringify(stats, null, 2)}

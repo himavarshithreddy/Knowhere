@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 
 const NARRATIVES = [
-  'The V4 Intelligence engine watches what you search and build.',
+  'Nebula watches what you search and build.',
   'It automatically surfaces just-in-time discoveries from your past.',
   'Track your Knowledge Activation Rate and never hoard unused links again.',
 ] as const;
@@ -47,7 +47,7 @@ export function MemoryNebula() {
         {/* Text column */}
         <div className="nebula-text">
 
-          <span className="section-label" style={{ display: 'block', marginBottom: '16px' }}>V4 Intelligence Layer</span>
+          <span className="section-label" style={{ display: 'block', marginBottom: '16px' }}>Nebula</span>
           <h2 className="section-title">Just-in-Time Surfacing</h2>
 
           {NARRATIVES.map((text, i) => (

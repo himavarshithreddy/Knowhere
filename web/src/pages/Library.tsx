@@ -157,7 +157,7 @@ export function Library({ mode = "library" }: { mode?: "library" | "favorites" |
     });
   }, [baseResources, effectiveCategory, query, sort, categories, selectedTags, intentFilter]);
 
-  // V4 Intelligence: Track searches
+  // Track searches
   useEffect(() => {
     if (query.trim().length > 0) {
       const timeoutId = setTimeout(() => {

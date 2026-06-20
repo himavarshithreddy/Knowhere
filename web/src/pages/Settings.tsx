@@ -173,9 +173,9 @@ export function Settings() {
           onClick={async () => {
             if (!pushEnabled) return;
             try {
-              setPushStatus("Sending test...");
-              await api.sendTestPush();
-              setPushStatus("Test notification sent!");
+              setPushStatus("Sending AI notification...");
+              await api.triggerDailyPush();
+              setPushStatus("AI Notification sent! Check your device.");
             } catch (e: any) {
               setPushStatus("Error: " + e.message);
             }
@@ -188,9 +188,11 @@ export function Settings() {
       </div>
       <div className="setting-row">
         <div><strong>Push Notifications</strong><span>Receive daily reminders for forgotten items and overdue missions.</span></div>
-        <button className={`button ${pushEnabled ? 'danger' : 'primary'}`} onClick={togglePush}>
-          {pushEnabled ? 'Disable' : 'Enable'}
-        </button>
+        <div className="settings-actions">
+          <button className={`button ${pushEnabled ? 'danger' : 'primary'}`} onClick={togglePush}>
+            {pushEnabled ? 'Disable' : 'Enable'}
+          </button>
+        </div>
       </div>
       {pushStatus && <p className="status-message" role="status" style={{fontSize: '13px', color: 'var(--muted)', marginTop: '8px'}}>{pushStatus}</p>}
     </section>

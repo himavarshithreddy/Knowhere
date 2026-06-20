@@ -25,7 +25,7 @@ No passwords to remember. No cluttered UI. Just your universe of information, pe
 ## Why Knowhere?
 
 - **Simplicity by Design:** A fluid, app-like experience that gets out of your way and lets you focus on your content.
-- **V4 Intelligence Engine:** The system actively watches what you search for and build, surfacing exactly the right knowledge right when you need it.
+- **Nebula:** The intelligence layer that actively watches what you search for and build, surfacing exactly the right knowledge right when you need it.
 - **Uncompromising Motivation:** Stop procrastinating. Set Missions and let Knowhere send you intense push notifications to force you into action.
 - **Privacy First:** Your data is yours. Protected by enterprise-grade security and accessible only via your unique access code.
 - **Instant Access Anywhere:** Seamlessly transition between desktop and mobile. Your collection is always just a set of Coords away.
@@ -35,7 +35,7 @@ No passwords to remember. No cluttered UI. Just your universe of information, pe
 ### Zero-Friction AI Tagging
 Save anything. Drop links, write quick notes, or upload images. Knowhere's AI automatically analyzes, tags, and groups your resources. No manual organization required.
 
-### V4 Intelligence Layer & Dashboard
+### Nebula: Intelligence Layer & Dashboard
 Not just a dashboard of vanity metrics. Knowhere tracks your *Knowledge Activation Rate*, monitoring how effectively you turn saved links into completed projects, resurrected ideas, and true action.
 
 ### Just-in-Time Surfacing

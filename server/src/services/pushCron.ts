@@ -56,7 +56,7 @@ Write a highly intense, urgent, and punchy push notification body (1 to 2 short 
     }
   }
 
-  // 2. V4 Intelligence Recommendation
+  // 2. Nebula Recommendation
   const fallback = await getDailyFallbackNotification(userId);
   if (fallback) {
     const resourceTitle = fallback.resource.title || fallback.resource.metadata?.title || "this forgotten item";
@@ -64,9 +64,9 @@ Write a highly intense, urgent, and punchy push notification body (1 to 2 short 
     
     if (ai) {
       try {
-        const prompt = `You are Knowhere, an AI intelligence engine powering a V4 contextual recommendation system. Write a highly compelling, punchy push notification body (1 to 2 short sentences, max 120 characters) to push the user to act.
+        const prompt = `You are Nebula, an AI intelligence layer powering a contextual recommendation system for Knowhere. Write a highly compelling, punchy push notification body (1 to 2 short sentences, max 120 characters) to push the user to act.
 Resource: "${resourceTitle}"
-Intelligence Engine Reason: "${fallback.reason}"
+Nebula Reason: "${fallback.reason}"
 Tier: ${fallback.tier}
 Use an urgent, direct, and slightly challenging tone to break their procrastination. Wake them up. Do not include the title in the body. Do not use quotes. Do not use emojis under any circumstances.`;
         const response = await ai.models.generateContent({ model: "gemini-2.5-flash", contents: prompt, config: { temperature: 0.7 } });
@@ -75,7 +75,7 @@ Use an urgent, direct, and slightly challenging tone to break their procrastinat
     }
 
     notificationsToSend.push({
-      title: "Knowhere Intelligence",
+      title: "Nebula",
       body,
       url: `/library?resource=${fallback.resource._id}`
     });
