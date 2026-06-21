@@ -74,7 +74,8 @@ self.addEventListener('push', (event) => {
       icon: '/push-icon.svg',
       badge: '/notification-badge.svg',
       data: { url: data.url || '/' },
-      vibrate: [100, 50, 100],
+      vibrate: [200, 100, 200], // Double vibration pulse pattern
+      sound: '/notification.wav', // Futuristic audio chime
       requireInteraction: true // Keeps notification visible until clicked or dismissed
     };
 
