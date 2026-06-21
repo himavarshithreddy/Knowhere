@@ -64,25 +64,57 @@ registerRoute(
 // ----------------------------------------------------------------------
 
 self.addEventListener('push', (event) => {
-  if (!event.data) return;
-  
-  try {
-    const data = event.data.json();
-    const title = data.title || 'Knowhere';
-    const options = {
-      body: data.body || '',
-      icon: '/push-icon.svg',
-      badge: '/notification-badge.svg',
-      data: { url: data.url || '/' },
-      vibrate: [200, 100, 200], // Double vibration pulse pattern
-      sound: '/notification.wav', // Futuristic audio chime
-      requireInteraction: true // Keeps notification visible until clicked or dismissed
-    };
-
-    event.waitUntil(self.registration.showNotification(title, options));
-  } catch (err) {
-    console.error('Error parsing push event data:', err);
+  console.log('[Service Worker] Push event received:', event);
+  if (!event.data) {
+    console.warn('[Service Worker] Push event contains no data.');
+    return;
   }
+  
+  const showPushNotification = async () => {
+    try {
+      const text = event.data!.text();
+      console.log('[Service Worker] Raw push payload text:', text);
+      
+      let data;
+      try {
+        data = event.data!.json();
+        console.log('[Service Worker] Parsed push JSON:', data);
+      } catch (jsonErr) {
+        console.error('[Service Worker] Failed to parse push payload as JSON. Using raw text:', jsonErr);
+        data = { title: 'Knowhere', body: text };
+      }
+      
+      const title = data.title || 'Knowhere';
+      const options = {
+        body: data.body || '',
+        icon: '/push-icon.svg',
+        badge: '/notification-badge.svg',
+        data: { url: data.url || '/' },
+        requireInteraction: true // Keeps notification visible until clicked or dismissed
+      };
+
+      console.log('[Service Worker] Attempting to show notification:', title, options);
+
+      try {
+        await self.registration.showNotification(title, options);
+        console.log('[Service Worker] showNotification succeeded.');
+      } catch (innerErr) {
+        console.error('[Service Worker] showNotification failed with full options, retrying with basic options:', innerErr);
+        // Fallback: remove requireInteraction to avoid platform-specific errors
+        await self.registration.showNotification(title, {
+          body: options.body,
+          icon: options.icon,
+          badge: options.badge,
+          data: options.data
+        });
+        console.log('[Service Worker] showNotification (fallback basic) succeeded.');
+      }
+    } catch (err) {
+      console.error('[Service Worker] Critical error in push event handler:', err);
+    }
+  };
+
+  event.waitUntil(showPushNotification());
 });
 
 self.addEventListener('notificationclick', (event) => {

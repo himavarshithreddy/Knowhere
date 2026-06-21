@@ -65,9 +65,14 @@ pushRouter.post("/unsubscribe", async (req, res) => {
 });
 
 pushRouter.post("/test", async (req, res) => {
+  console.log(`[Push Test] Received request to trigger test push from user uid: ${req.auth?.uid}`);
   const user = await User.findOne({ uid: req.auth!.uid });
-  if (!user) return res.status(404).json({ error: "User not found." });
+  if (!user) {
+    console.error(`[Push Test] User not found for uid: ${req.auth?.uid}`);
+    return res.status(404).json({ error: "User not found." });
+  }
 
+  console.log(`[Push Test] User found. Subscriptions count: ${user.pushSubscriptions?.length || 0}`);
   if (!user.pushSubscriptions || user.pushSubscriptions.length === 0) {
     return res.status(400).json({ error: "No active push subscriptions found for this user." });
   }
@@ -83,24 +88,26 @@ pushRouter.post("/test", async (req, res) => {
 
   for (let i = user.pushSubscriptions.length - 1; i >= 0; i--) {
     const sub = user.pushSubscriptions[i];
+    console.log(`[Push Test] Sending test push to endpoint: ${sub.endpoint}`);
     try {
       await webpush.sendNotification(
         { endpoint: sub.endpoint, keys: sub.keys as any },
         payload
       );
+      console.log(`[Push Test] Successfully sent test notification to endpoint: ${sub.endpoint}`);
       sentCount++;
     } catch (err: any) {
+      console.error(`[Push Test] Failed to send to endpoint ${sub.endpoint}:`, err);
+      failCount++;
       if (err.statusCode === 410 || err.statusCode === 404) {
+        console.warn(`[Push Test] Subscription expired or gone (status ${err.statusCode}). Removing subscription.`);
         user.pushSubscriptions.splice(i, 1);
-        failCount++;
-      } else {
-        console.error(`[Push Test] Failed to send:`, err);
-        failCount++;
       }
     }
   }
 
   if (failCount > 0) {
+    console.log(`[Push Test] Saving user push subscriptions updates after ${failCount} failures...`);
     await user.save();
   }
 
@@ -108,35 +115,51 @@ pushRouter.post("/test", async (req, res) => {
 });
 
 pushRouter.post("/trigger-daily", async (req, res) => {
+  console.log(`[Push Daily] Received request to trigger daily push from user uid: ${req.auth?.uid}`);
   const user = await User.findOne({ uid: req.auth!.uid });
-  if (!user) return res.status(404).json({ error: "User not found." });
+  if (!user) {
+    console.error(`[Push Daily] User not found for uid: ${req.auth?.uid}`);
+    return res.status(404).json({ error: "User not found." });
+  }
 
+  console.log(`[Push Daily] User found. Subscriptions count: ${user.pushSubscriptions?.length || 0}`);
   if (!user.pushSubscriptions || user.pushSubscriptions.length === 0) {
     return res.status(400).json({ error: "No active push subscriptions found." });
   }
 
+  console.log(`[Push Daily] Generating recommendations for user: ${user.uid}`);
   const toSend = await generatePushPayloadsForUser(user.uid);
+  console.log(`[Push Daily] Generated ${toSend.length} recommendations to send:`, JSON.stringify(toSend));
   
   if (toSend.length === 0) {
     return res.json({ ok: true, message: "No recommendations to send.", sentCount: 0 });
   }
 
   let sentCount = 0;
+  let failCount = 0;
   for (const notif of toSend) {
     const payload = JSON.stringify(notif);
     for (let i = user.pushSubscriptions.length - 1; i >= 0; i--) {
       const sub = user.pushSubscriptions[i];
+      console.log(`[Push Daily] Sending payload to endpoint: ${sub.endpoint}`);
       try {
         await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys as any }, payload);
+        console.log(`[Push Daily] Successfully sent notification to endpoint: ${sub.endpoint}`);
         sentCount++;
       } catch (err: any) {
+        console.error(`[Push Daily] Failed to send notification to endpoint ${sub.endpoint}:`, err);
+        failCount++;
         if (err.statusCode === 410 || err.statusCode === 404) {
+          console.warn(`[Push Daily] Subscription expired or gone (status ${err.statusCode}). Removing subscription.`);
           user.pushSubscriptions.splice(i, 1);
         }
       }
     }
   }
 
+  if (failCount > 0) {
+    console.log(`[Push Daily] Saving user push subscriptions updates after ${failCount} failures...`);
+  }
   await user.save();
-  res.json({ ok: true, sentCount, sentPayloads: toSend });
+  res.json({ ok: true, sentCount, failCount, sentPayloads: toSend });
 });

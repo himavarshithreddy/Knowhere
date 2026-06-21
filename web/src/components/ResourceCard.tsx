@@ -106,21 +106,7 @@ export function ResourceCard({ resource, category, view, mode, onOpen, onAction 
         <span className="hud-meta">{relativeDate(resource.createdAt)}</span>
       </div>
 
-      {!resource.locked && (resource.tags ?? []).length > 0 && (
-        <div className="resource-tags" onClick={e => e.stopPropagation()}>
-          {(resource.tags ?? []).slice(0, 3).map(tag => (
-            <button
-              key={tag}
-              type="button"
-              className="tag-pill"
-              onClick={() => navigate(`/library?tag=${encodeURIComponent(tag)}`)}
-              title={`Filter by ${tag}`}
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
-      )}
+
 
       <div className="resource-actions" onClick={(e) => e.stopPropagation()}>
         {mode === "trash" ? <>

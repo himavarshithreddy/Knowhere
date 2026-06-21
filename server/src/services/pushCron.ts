@@ -108,11 +108,11 @@ Entropy Seed: "${entropySeed}"
 
 Instructions:
 1. Use the specific facts provided in the "Nebula Context" to tailor the notification specifically to this item.
-2. Focus heavily on the Resource Title and Resource Description to construct your message. Use concrete details from what this resource is actually about (from its description) to make the motivation highly specific and relevant. Do NOT make any use of tags, topics, or categories in the notification body; keep it strictly centered on the content and meaning of the title and description.
+2. Focus heavily on the Resource Title and Resource Description to construct your message. Use concrete details from what this resource is actually about (from its description or tags) to make the motivation highly specific and relevant.
 3. ${randomStyle}
 4. ${randomVibe}
 5. Use an urgent, direct, and slightly challenging tone to break their procrastination. Wake them up.
-6. Do not include the resource title in the body.
+6. You may creatively reference the title or topic, but keep the overall length extremely punchy (under 120 characters).
 7. Do not use quotes or emojis under any circumstances.`;
         const response = await ai.chat.completions.create({
           model: "google/gemini-2.5-flash",
@@ -125,8 +125,9 @@ Instructions:
       } catch (e) { /* ignore and fallback */ }
     }
 
+    const shortTitle = resourceTitle.length > 40 ? resourceTitle.substring(0, 37) + "..." : resourceTitle;
     notificationsToSend.push({
-      title: "Nebula",
+      title: `Nebula: ${shortTitle}`,
       body,
       url: `/library?resource=${fallback.resource._id}`
     });
@@ -136,9 +137,9 @@ Instructions:
 };
 
 export const startPushCron = () => {
-  // Run every day at 11:00 AM
-  cron.schedule("0 11 * * *", async () => {
-    console.log("[Push Cron] Running daily push notification job...");
+  // Run every day at 11:00 AM and 6:00 PM (18:00)
+  cron.schedule("0 11,18 * * *", async () => {
+    console.log("[Push Cron] Running push notification job...");
 
     try {
       const usersWithPush = await User.find({ "pushSubscriptions.0": { $exists: true } });

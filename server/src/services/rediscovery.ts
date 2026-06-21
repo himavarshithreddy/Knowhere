@@ -3,7 +3,7 @@ import { Resource, InteractionEvent, SearchEvent, type ResourceDoc } from "../mo
 export interface RediscoverySuggestion {
   resource: ResourceDoc;
   reason: string;
-  tier: 1 | 2 | 3;
+  tier: 1 | 2 | 3 | 4;
 }
 
 const getResourceContext = (r: ResourceDoc) => {
@@ -69,15 +69,17 @@ export const getTieredRecommendations = async (userId: string): Promise<Rediscov
     if (suggestions.some(x => String(x.resource._id) === String(r._id))) continue;
     
     const ageMs = now - new Date(r.createdAt).getTime();
+    const title = r.title || r.metadata?.title || getResourceContext(r).typeText;
+    const truncatedTitle = title.length > 50 ? title.substring(0, 47) + "..." : title;
     
     // Opportunity Resurrection: Idea > 11 months, overlaps with recent tags
     if (r.intentType === ("idea" as any) && ageMs > elevenMonthsMs) {
       const overlap = r.tags?.some(t => recentTags.has(t));
       if (overlap) {
-        const { typeText, ageDescription } = getResourceContext(r);
+        const { ageDescription } = getResourceContext(r);
         suggestions.push({
           resource: r,
-          reason: `This old ${typeText} idea was saved ${ageDescription} and matches your recent interest topics. Resurrect it?`,
+          reason: `Your old idea "${truncatedTitle}" from ${ageDescription} matches your recent interests. Resurrect it?`,
           tier: 2
         });
         continue;
@@ -87,10 +89,10 @@ export const getTieredRecommendations = async (userId: string): Promise<Rediscov
     // Inactivity Recovery: > 90 days, 0 views
     const hasOpen = interactions.some(i => String(i.resourceId) === String(r._id) && i.type === "open");
     if (ageMs > ninetyDaysMs && !hasOpen) {
-      const { typeText, ageDescription } = getResourceContext(r);
+      const { ageDescription } = getResourceContext(r);
       suggestions.push({
         resource: r,
-        reason: `You saved this ${typeText} ${ageDescription} and have never opened or reviewed it.`,
+        reason: `You saved "${truncatedTitle}" ${ageDescription} but never opened or reviewed it.`,
         tier: 2
       });
       continue;
@@ -107,10 +109,12 @@ export const getTieredRecommendations = async (userId: string): Promise<Rediscov
       const resourceInteractions = interactions.filter(i => String(i.resourceId) === String(r._id));
       const hasUsed = resourceInteractions.some(i => i.type === "use" || i.type === "build" || i.type === "complete");
       if (!hasUsed && resourceInteractions.length > 0) {
-        const { typeText, ageDescription } = getResourceContext(r);
+        const { ageDescription } = getResourceContext(r);
+        const title = r.title || r.metadata?.title || "this resource";
+        const truncatedTitle = title.length > 50 ? title.substring(0, 47) + "..." : title;
         suggestions.push({
           resource: r,
-          reason: `You saved and viewed this ${typeText} ${ageDescription}, but never applied, built, or completed it. Knowledge is decaying.`,
+          reason: `You viewed "${truncatedTitle}" ${ageDescription}, but never applied it. Knowledge is decaying.`,
           tier: 3
         });
       }
@@ -154,6 +158,61 @@ export const getDailyFallbackNotification = async (userId: string): Promise<Redi
       resource: random,
       reason,
       tier: 3
+    };
+  }
+
+  // Absolute Final Fallback: Score resources based on analytics and pick the best one
+  if (resources.length > 0) {
+    const scoredResources = resources.map(r => {
+      let score = 0;
+      
+      // Insight 1: User explicitly marked as valuable
+      if (r.favorite) score += 50;
+      
+      // Insight 2: High interaction frequency
+      score += Math.min((r.viewCount || 0) * 10, 50);
+      
+      // Insight 3: Active but not completed
+      if (r.actionStatus === "in_progress") score += 30;
+      if (r.intentType === "mission") score += 20;
+      
+      // Insight 4: Milestone progress
+      if (r.milestones && r.milestones.length > 0) {
+        const completedCount = r.milestones.filter(m => m.completed).length;
+        if (completedCount < r.milestones.length) score += 20; // Has pending work
+        if (completedCount > 0) score += 10; // Has some momentum
+      }
+      
+      // Insight 5: Don't recommend if they literally just viewed it today
+      if (r.lastViewedAt) {
+        const daysSinceView = (Date.now() - new Date(r.lastViewedAt).getTime()) / (1000 * 60 * 60 * 24);
+        if (daysSinceView < 1) score -= 40;
+      }
+      
+      // Add a tiny bit of entropy to break ties and prevent repetitive recommendations
+      score += Math.random() * 5;
+      
+      return { resource: r, score };
+    });
+
+    scoredResources.sort((a, b) => b.score - a.score);
+    const bestResource = scoredResources[0].resource;
+    
+    const { ageDescription } = getResourceContext(bestResource);
+    const title = bestResource.title || bestResource.metadata?.title || "this resource";
+    const truncatedTitle = title.length > 50 ? title.substring(0, 47) + "..." : title;
+    
+    const templates = [
+      `Your highly-ranked save "${truncatedTitle}" from ${ageDescription} is waiting. Let's keep the momentum going.`,
+      `Based on your activity, "${truncatedTitle}" is a top priority today.`,
+      `You've shown high interest in "${truncatedTitle}". Dive back in?`
+    ];
+    const reason = templates[Math.floor(Math.random() * templates.length)];
+    
+    return {
+      resource: bestResource,
+      reason,
+      tier: 4
     };
   }
 

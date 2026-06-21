@@ -28,40 +28,63 @@ export function Settings() {
   const [pushStatus, setPushStatus] = useState("");
 
   useEffect(() => {
+    console.log("[Push Settings] Checking service worker and push manager support...");
     if ('serviceWorker' in navigator && 'PushManager' in window) {
       navigator.serviceWorker.getRegistration().then(reg => {
+        console.log("[Push Settings] Service worker registration found:", !!reg);
         if (reg) {
           reg.pushManager.getSubscription().then(sub => {
+            console.log("[Push Settings] Existing subscription:", sub ? sub.endpoint : "none");
             setPushEnabled(!!sub);
+          }).catch(err => {
+            console.error("[Push Settings] Error checking subscription:", err);
           });
         }
+      }).catch(err => {
+        console.error("[Push Settings] Error getting registration:", err);
       });
+    } else {
+      console.warn("[Push Settings] Service worker or PushManager not supported in this browser.");
     }
   }, []);
 
   const togglePush = async () => {
+    console.log("[Push Settings] togglePush called. Current pushEnabled state:", pushEnabled);
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      console.warn("[Push Settings] Service worker or PushManager not supported.");
       setPushStatus("Push notifications are not supported in this browser.");
       return;
     }
     setPushStatus("Processing...");
     try {
       const reg = await navigator.serviceWorker.ready;
+      console.log("[Push Settings] Service worker ready status:", !!reg);
       if (pushEnabled) {
+        console.log("[Push Settings] Disabling push notifications...");
         const sub = await reg.pushManager.getSubscription();
+        console.log("[Push Settings] Sub to unsubscribe from:", sub ? sub.endpoint : "none");
         if (sub) {
-          await sub.unsubscribe();
-          await api.unsubscribePush(sub.endpoint);
+          const unsubscribed = await sub.unsubscribe();
+          console.log("[Push Settings] pushManager unsubscribe result:", unsubscribed);
+          const apiRes = await api.unsubscribePush(sub.endpoint);
+          console.log("[Push Settings] API unsubscribe response:", apiRes);
         }
         setPushEnabled(false);
         setPushStatus("Notifications disabled.");
       } else {
+        console.log("[Push Settings] Enabling push notifications, requesting permission...");
         const permission = await Notification.requestPermission();
+        console.log("[Push Settings] Notification permission status:", permission);
         if (permission !== 'granted') {
           setPushStatus("Permission denied.");
           return;
         }
+        console.log("[Push Settings] Fetching VAPID public key from backend...");
         const { publicKey } = await api.getVapidPublicKey();
+        console.log("[Push Settings] VAPID public key received (length):", publicKey?.length);
+        if (!publicKey) {
+          throw new Error("No public key returned from backend. Check server configuration.");
+        }
         const padding = '='.repeat((4 - publicKey.length % 4) % 4);
         const base64 = (publicKey + padding).replace(/\-/g, '+').replace(/_/g, '/');
         const rawData = window.atob(base64);
@@ -69,15 +92,19 @@ export function Settings() {
         for (let i = 0; i < rawData.length; ++i) {
           outputArray[i] = rawData.charCodeAt(i);
         }
+        console.log("[Push Settings] Subscribing via pushManager...");
         const sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: outputArray
         });
-        await api.subscribePush(sub);
+        console.log("[Push Settings] Push subscription object created:", sub.endpoint);
+        const apiRes = await api.subscribePush(sub);
+        console.log("[Push Settings] API subscription response:", apiRes);
         setPushEnabled(true);
         setPushStatus("Notifications enabled!");
       }
     } catch (err: any) {
+      console.error("[Push Settings] Error during togglePush:", err);
       setPushStatus("Error: " + err.message);
     }
   };
@@ -169,14 +196,28 @@ export function Settings() {
     <section className="settings-section">
       <div className="settings-heading">
         <BellRing 
-          style={{ cursor: pushEnabled ? "pointer" : "default" }}
+          style={{ cursor: "pointer" }}
           onClick={async () => {
-            if (!pushEnabled) return;
+            console.log("[Push Settings] Bell icon clicked. pushEnabled:", pushEnabled);
+            if (!pushEnabled) {
+              console.warn("[Push Settings] Clicked bell icon but push notifications are disabled.");
+              setPushStatus("Push notifications are disabled. Please enable them first using the button below.");
+              return;
+            }
             try {
+              console.log("[Push Settings] Triggering daily push notification...");
               setPushStatus("Sending AI notification...");
-              await api.triggerDailyPush();
-              setPushStatus("AI Notification sent! Check your device.");
+              const res = await api.triggerDailyPush();
+              console.log("[Push Settings] Daily push response:", res);
+              if (res.sentCount === 0) {
+                const msg = res.message || "No overdue missions or forgotten items to recommend.";
+                console.log("[Push Settings] 0 notifications sent. Reason:", msg);
+                setPushStatus(`Server succeeded, but sent 0 notifications: ${msg}`);
+              } else {
+                setPushStatus(`AI Notification sent! Check your device. (Sent: ${res.sentCount}, Failed: ${res.failCount || 0})`);
+              }
             } catch (e: any) {
+              console.error("[Push Settings] Error triggering daily push:", e);
               setPushStatus("Error: " + e.message);
             }
           }}
