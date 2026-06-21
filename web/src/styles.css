@@ -98,6 +98,7 @@
 }
 
 
+html, body { overflow-x: hidden; }
 body { margin: 0; min-width: 272px; min-height: 100dvh; background: var(--bg); color: var(--text); }
 
 /* ─── Toast / Snackbar ─── */
@@ -248,7 +249,7 @@ h1,h2,h3,p { margin-top: 0; }
 .new-resource:active { transform: translateY(0); box-shadow: 0 1px 0 color-mix(in srgb, var(--on-accent) 8%, transparent) inset, 0 5.1px 15.3px color-mix(in srgb, var(--accent) 30%, transparent); }
 .new-resource-icon { width: 25.5px; height: 25.5px; border-radius: 7.65px; display: grid; place-items: center; background: color-mix(in srgb, var(--on-accent) 14%, transparent); flex-shrink: 0; }
 .new-resource-icon svg { width: 15.3px; height: 15.3px; stroke-width: 2.25; }
-.toolbar { display: flex; align-items: center; gap: 11.9px clamp(15.3px, 1.87vw, 27.2px); padding: 17px 0 23.8px; border-bottom: 1px solid var(--line); margin-bottom: 23.8px; flex-wrap: nowrap; --toolbar-h: 40.8px; --toolbar-radius: 10.2px; }
+.toolbar { display: flex; align-items: center; gap: 11.9px clamp(15.3px, 1.87vw, 27.2px); padding: 17px 0 23.8px; border-bottom: 1px solid var(--line); margin-bottom: 23.8px; flex-wrap: wrap; --toolbar-h: 40.8px; --toolbar-radius: 10.2px; }
 .toolbar-cluster { display: flex; align-items: center; min-width: 0; }
 .toolbar-cluster-primary { display: flex; align-items: center; gap: 11.9px; flex: 1 1 476px; min-width: min(100%, 306px); }
 .toolbar-cluster-filters { display: flex; align-items: center; justify-content: flex-end; gap: 11.9px; flex: 0 0 auto; flex-wrap: wrap; margin-left: auto; }

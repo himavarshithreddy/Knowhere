@@ -14,7 +14,6 @@ import { ResourceCard } from "../components/ResourceCard";
 import { ResourceForm } from "../components/ResourceForm";
 import { ResourceDetail } from "../components/ResourceDetail";
 import { ToolbarMenu } from "../components/ToolbarMenu";
-import { TagFilterMenu } from "../components/TagFilterMenu";
 import { WorkspaceHeaderActions } from "../components/WorkspaceHeaderActions";
 import { WorkspaceHeaderMeta } from "../components/WorkspaceHeaderMeta";
 import { usePageSeo } from "../hooks/usePageSeo";
@@ -99,15 +98,6 @@ export function Library({ mode = "library" }: { mode?: "library" | "favorites" |
     if (mode === "archive") return resource.archived;
     return !resource.archived;
   }), [resources, mode]);
-
-  // All unique tags across the current base resources (for the filter menu)
-  const availableTags = useMemo(() => {
-    const tagSet = new Set<string>();
-    for (const r of baseResources) {
-      (r.tags ?? []).forEach(t => tagSet.add(t));
-    }
-    return Array.from(tagSet).sort();
-  }, [baseResources]);
 
   const categoryCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -383,13 +373,6 @@ export function Library({ mode = "library" }: { mode?: "library" | "favorites" |
               { value: "goal", label: "Goal" },
             ]}
             onChange={setIntentFilter} />
-        )}
-        {!showingCategories && (
-          <TagFilterMenu
-            availableTags={availableTags}
-            selectedTags={selectedTags}
-            onChange={setSelectedTags}
-          />
         )}
         <ToolbarMenu aria-label="Sort order" value={sort} options={sortOptions} onChange={setSort} />
         <div className="icon-pair">
