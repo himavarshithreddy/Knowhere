@@ -184,6 +184,17 @@ resourcesRouter.post("/:id/view", async (req, res) => {
   res.json({ ok: true, viewCount: resource.viewCount, lastViewedAt: resource.lastViewedAt });
 });
 
+resourcesRouter.delete("/trash/empty", async (req, res) => {
+  const trashedResources = await Resource.find({ userId: req.auth!.uid, deletedAt: { $ne: null } });
+  for (const resource of trashedResources) {
+    if (resource.storagePath) {
+      await deleteStoredFile(resource.storagePath).catch(console.error);
+    }
+  }
+  await Resource.deleteMany({ userId: req.auth!.uid, deletedAt: { $ne: null } });
+  res.json({ ok: true });
+});
+
 resourcesRouter.delete("/:id", async (req, res) => {
   const resource = await Resource.findOne({ _id: req.params.id, userId: req.auth!.uid });
   if (!resource) return res.status(404).json({ error: "Resource not found." });

@@ -46,7 +46,8 @@ Write a highly intense, urgent, and punchy push notification body (1 to 2 short 
             const response = await ai.chat.completions.create({
               model: "google/gemini-2.5-flash",
               messages: [{ role: "user", content: prompt }],
-              temperature: 0.7
+              temperature: 0.7,
+              max_tokens: 16000
             });
             const content = response.choices[0]?.message?.content;
             if (content) body = content.trim();
@@ -116,7 +117,8 @@ Instructions:
         const response = await ai.chat.completions.create({
           model: "google/gemini-2.5-flash",
           messages: [{ role: "user", content: prompt }],
-          temperature: 0.95
+          temperature: 0.95,
+          max_tokens: 16000
         });
         const content = response.choices[0]?.message?.content;
         if (content) body = content.trim();

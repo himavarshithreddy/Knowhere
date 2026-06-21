@@ -98,6 +98,7 @@ Instructions:
       model: "google/gemini-2.5-flash",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.1,
+      max_tokens: 16000,
       response_format: {
         type: "json_schema",
         json_schema: {

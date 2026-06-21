@@ -82,6 +82,7 @@ export const api = {
   updateResource: (id: string, patch: Partial<Resource>) =>
     request<Resource>(`/api/resources/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
   deleteResource: (id: string) => request<{ ok: boolean }>(`/api/resources/${id}`, { method: "DELETE" }),
+  emptyTrash: () => request<{ ok: boolean }>("/api/resources/trash/empty", { method: "DELETE" }),
   recordView: (id: string, type?: string) => request<{ ok: boolean; viewCount: number; lastViewedAt: string }>(`/api/resources/${id}/view`, { method: "POST", body: type ? JSON.stringify({ type }) : undefined }),
   trackSearch: (query: string, resultsCount: number) => request<{ ok: boolean }>("/api/stats/search", { method: "POST", body: JSON.stringify({ query, resultsCount }) }),
 

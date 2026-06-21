@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-import { AlignLeft, Grid2X2, List, Plus, Search, SlidersHorizontal } from "lucide-react";
+import { AlignLeft, Grid2X2, List, Plus, Search, SlidersHorizontal, Trash2 } from "lucide-react";
 import type { Category, Resource } from "@knowhere/shared";
 import { useData } from "../contexts/DataContext";
 import { useToast } from "../contexts/ToastContext";
@@ -23,7 +23,7 @@ import { SEO } from "../lib/seo";
 type BrowseMode = "categories" | "resources";
 
 export function Library({ mode = "library" }: { mode?: "library" | "favorites" | "archive" | "trash" }) {
-  const { profile, resources, categories, loading, error, updateResource, permanentlyDelete, updatePreferences } = useData();
+  const { profile, resources, categories, loading, error, updateResource, permanentlyDelete, emptyTrash, updatePreferences } = useData();
   const { addToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState("");
@@ -261,6 +261,17 @@ export function Library({ mode = "library" }: { mode?: "library" | "favorites" |
     if (action === "permanent" && confirm("Permanently delete this resource? This cannot be undone.")) await permanentlyDelete(resource);
   };
 
+  const handleEmptyTrash = async () => {
+    if (confirm("Are you sure you want to permanently delete all items in the trash? This action cannot be undone.")) {
+      try {
+        await emptyTrash();
+        addToast({ message: "Trash emptied successfully.", type: "success" });
+      } catch (err) {
+        addToast({ message: "Failed to empty trash.", type: "error" });
+      }
+    }
+  };
+
   const formCategory = showingCategoryResources && selectedCategoryId
     ? selectedCategoryId
     : category !== "all" ? category : undefined;
@@ -301,10 +312,19 @@ export function Library({ mode = "library" }: { mode?: "library" | "favorites" |
           <Search />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Scan for signals..." aria-label="Search signals" />
         </label>
-        {mode !== "trash" && <button type="button" className="button primary new-resource" onClick={openForm}>
-          <span className="new-resource-icon" aria-hidden="true"><Plus size={18} strokeWidth={2.25} /></span>
-          Log discovery
-        </button>}
+        {mode !== "trash" ? (
+          <button type="button" className="button primary new-resource" onClick={openForm}>
+            <span className="new-resource-icon" aria-hidden="true"><Plus size={18} strokeWidth={2.25} /></span>
+            Log discovery
+          </button>
+        ) : (
+          baseResources.length > 0 && (
+            <button type="button" className="button danger empty-trash" onClick={handleEmptyTrash} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <Trash2 size={16} />
+              Empty Trash
+            </button>
+          )
+        )}
       </div>
       <div className="toolbar-cluster toolbar-cluster-filters">
         {isLibrary && (

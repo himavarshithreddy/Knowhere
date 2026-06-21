@@ -16,6 +16,7 @@ type DataState = {
   updateResource: (id: string, patch: Partial<Resource>) => Promise<void>;
   recordView: (id: string, type?: string) => Promise<void>;
   permanentlyDelete: (resource: Resource) => Promise<void>;
+  emptyTrash: () => Promise<void>;
   addCategory: (name: string) => Promise<string>;
   renameCategory: (id: string, name: string) => Promise<void>;
   reorderCategories: (categories: Category[]) => Promise<void>;
@@ -122,6 +123,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
     recordView,
     permanentlyDelete: async (resource) => {
       await api.deleteResource(resource.id);
+      await refresh();
+    },
+    emptyTrash: async () => {
+      await api.emptyTrash();
       await refresh();
     },
     addCategory: async (name) => {
