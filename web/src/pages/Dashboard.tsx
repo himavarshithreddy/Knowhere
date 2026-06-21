@@ -33,10 +33,18 @@ type DashboardData = {
   intelligence?: IntelligenceData;
 };
 
+let cachedDashboardData: { userId: string; data: DashboardData } | null = null;
+
 export function Dashboard() {
-  const { categories, resources } = useData();
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { categories, resources, profile } = useData();
+  const currentUserId = profile?.uid || "";
+  
+  const initialData = (cachedDashboardData && cachedDashboardData.userId === currentUserId)
+    ? cachedDashboardData.data
+    : null;
+
+  const [data, setData] = useState<DashboardData | null>(initialData);
+  const [loading, setLoading] = useState(!initialData);
   const [searchParams, setSearchParams] = useSearchParams();
   const [formOpen, setFormOpen] = useState(false);
 
@@ -57,9 +65,12 @@ export function Dashboard() {
 
   useEffect(() => {
     let mounted = true;
+    if (!currentUserId) return;
+
     api.getDashboardData().then(res => {
       if (mounted) {
         setData(res);
+        cachedDashboardData = { userId: currentUserId, data: res };
         setLoading(false);
       }
     }).catch(err => {
@@ -67,7 +78,7 @@ export function Dashboard() {
       if (mounted) setLoading(false);
     });
     return () => { mounted = false; };
-  }, [resources]); // Re-fetch when global resources change (like status updates)
+  }, [resources, currentUserId]); // Re-fetch when global resources or user changes
 
   const openDetail = (id: string) => {
     setSearchParams((prev) => {
@@ -100,7 +111,7 @@ export function Dashboard() {
       <header className="workspace-header">
         <div className="workspace-header-main">
           <WorkspaceHeaderMeta eyebrow={<span className="hud-meta">Memory System</span>} />
-          <h1 style={{ display: "flex", alignItems: "center", gap: "12px" }}><LayoutDashboard size={36} style={{ color: "var(--accent)" }} /> Dashboard</h1>
+          <h1 style={{ display: "flex", alignItems: "center", gap: "12px" }}><LayoutDashboard className="dashboard-title-icon" /> Dashboard</h1>
         </div>
         <WorkspaceHeaderActions />
       </header>
@@ -111,7 +122,7 @@ export function Dashboard() {
             <LoaderCircle className="spin" size={32} color="var(--accent)" />
           </div>
         ) : data && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "48px", maxWidth: "1200px", margin: "0 auto" }}>
+          <div className="dashboard-content">
             
             {data.intelligence && <IntelligencePanel data={data.intelligence} />}
 

@@ -43,15 +43,7 @@ export function IntelligencePanel({ data }: Props) {
     <motion.div variants={container} initial="hidden" animate="show" style={{ display: "flex", flexDirection: "column", gap: "24px", marginBottom: "24px" }}>
       
       {/* AI Summary Header */}
-      <motion.div variants={item} style={{ 
-        padding: "24px", 
-        background: "linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%)",
-        border: "1px solid rgba(168, 85, 247, 0.2)",
-        borderRadius: "16px",
-        display: "flex",
-        alignItems: "flex-start",
-        gap: "16px"
-      }}>
+      <motion.div variants={item} className="intelligence-summary-card">
         <div style={{ padding: "12px", background: "rgba(168, 85, 247, 0.2)", borderRadius: "12px", color: "#c084fc" }}>
           <Brain size={24} />
         </div>
@@ -97,7 +89,7 @@ export function IntelligencePanel({ data }: Props) {
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1fr)", gap: "24px", alignItems: "start" }}>
+      <div className="intelligence-grid">
         
         {/* Left Column: Trends & Actionable Advice */}
         <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
