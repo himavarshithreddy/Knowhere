@@ -34,6 +34,11 @@ function isYouTubeUrl(url: URL) {
   return host === "youtube.com" || host === "youtu.be";
 }
 
+function isInstagramUrl(url: URL) {
+  const host = url.hostname.replace(/^www\./, "");
+  return host === "instagram.com";
+}
+
 function htmlToText(html: string) {
   return html
     .replace(/<br\s*\/?>/gi, "\n")
@@ -143,6 +148,32 @@ export async function extractMetadata(rawUrl: string) {
       };
       metadataCache.set(cacheKey, result);
       return result;
+    }
+  }
+
+  if (isInstagramUrl(url)) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const mlResponse = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(url.toString())}`, { signal: controller.signal });
+      clearTimeout(timeout);
+      if (mlResponse.ok) {
+        const mlData = await mlResponse.json() as any;
+        if (mlData.status === "success" && mlData.data) {
+          const result = {
+            title: mlData.data.title || "Instagram",
+            description: mlData.data.description || undefined,
+            siteName: "Instagram",
+            author: mlData.data.author || undefined,
+            imageUrl: mlData.data.image?.url || undefined,
+            faviconUrl: mlData.data.logo?.url || `https://www.instagram.com/favicon.ico`
+          };
+          metadataCache.set(cacheKey, result);
+          return result;
+        }
+      }
+    } catch (e) {
+      console.warn("[Metadata] Microlink fetch failed for Instagram:", e instanceof Error ? e.message : String(e));
     }
   }
 

@@ -46,8 +46,7 @@ Write a highly intense, urgent, and punchy push notification body (1 to 2 short 
             const response = await ai.chat.completions.create({
               model: "google/gemini-2.5-flash",
               messages: [{ role: "user", content: prompt }],
-              temperature: 0.7,
-              max_tokens: 16000
+              temperature: 0.7
             });
             const content = response.choices[0]?.message?.content;
             if (content) body = content.trim();
@@ -117,8 +116,7 @@ Instructions:
         const response = await ai.chat.completions.create({
           model: "google/gemini-2.5-flash",
           messages: [{ role: "user", content: prompt }],
-          temperature: 0.95,
-          max_tokens: 16000
+          temperature: 0.95
         });
         const content = response.choices[0]?.message?.content;
         if (content) body = content.trim();
@@ -137,8 +135,7 @@ Instructions:
 };
 
 export const startPushCron = () => {
-  // Run every day at 11:00 AM and 6:00 PM (18:00)
-  cron.schedule("0 11,18 * * *", async () => {
+  const runPushJob = async () => {
     console.log("[Push Cron] Running push notification job...");
 
     try {
@@ -172,9 +169,15 @@ export const startPushCron = () => {
         await user.save();
       }
       
-      console.log("[Push Cron] Daily push job completed.");
+      console.log("[Push Cron] Push job completed.");
     } catch (err) {
       console.error("[Push Cron] Error running push job:", err);
     }
-  });
+  };
+
+  // Run every day at 11:00 AM
+  cron.schedule("0 11 * * *", runPushJob);
+  
+  // Run every day at 6:30 PM (18:30)
+  cron.schedule("30 18 * * *", runPushJob);
 };

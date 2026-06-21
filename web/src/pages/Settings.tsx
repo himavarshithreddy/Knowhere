@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BellRing, Download, GripVertical, Lock, Moon, Plus, Trash2, UserRound } from "lucide-react";
+import { Archive, BellRing, Download, GripVertical, Lock, Moon, Plus, Trash2, UserRound } from "lucide-react";
 import { api } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 import { useData } from "../contexts/DataContext";
@@ -187,6 +187,33 @@ export function Settings() {
           }
         }}><Trash2 /></button>}
       </div>)}</div>
+    </section>
+    <section className="settings-section">
+      <div className="settings-heading">
+        <Archive />
+        <div>
+          <h2>Vault Folders</h2>
+          <p>Access other sectors of your collection.</p>
+        </div>
+      </div>
+      <div className="setting-row">
+        <div>
+          <strong>Archive</strong>
+          <span>View your archived discoveries.</span>
+        </div>
+        <button type="button" className="button secondary" onClick={() => navigate("/archive")}>
+          Open Archive
+        </button>
+      </div>
+      <div className="setting-row">
+        <div>
+          <strong>Trash</strong>
+          <span>View discarded signals and empty trash.</span>
+        </div>
+        <button type="button" className="button secondary" onClick={() => navigate("/trash")}>
+          Open Trash
+        </button>
+      </div>
     </section>
     <section className="settings-section"><div className="settings-heading"><Moon /><div><h2>Appearance</h2><p>Theme and brand assets.</p></div></div>
       <div className="setting-row"><div><strong>{theme === "dark" ? "Dark mode" : "Light mode"}</strong><span>Use the toggle in the page header to switch themes.</span></div></div>

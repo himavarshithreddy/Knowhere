@@ -711,6 +711,40 @@ h1,h2,h3,p { margin-top: 0; }
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 15%, transparent);
 }
 
+/* --- Resource Detail Modal --- */
+.detail-title-input {
+  font-size: 22px;
+  font-weight: bold;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  color: inherit;
+  padding: 0;
+  width: 100%;
+  margin: 0 0 16px 0;
+  outline: none;
+  transition: border-color 0.2s;
+  resize: none;
+  overflow: hidden;
+  font-family: inherit;
+  line-height: 1.3;
+}
+
+@media (max-width: 600px) {
+  .detail-panel .detail-title-input {
+    font-size: 16px;
+    margin: 0 0 12px 0;
+  }
+  .detail-panel textarea:not(.detail-title-input),
+  .detail-panel select,
+  .detail-panel input:not(.vault-pin-box) {
+    font-size: 14px !important;
+  }
+  .detail-panel .field > span {
+    font-size: 12px;
+  }
+}
+
 /* --- Vault Modal --- */
 .vault-modal {
   width: calc(100% - 32px);

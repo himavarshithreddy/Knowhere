@@ -1,4 +1,4 @@
-import { memo, useEffect, useState, useMemo } from "react";
+import { memo, useEffect, useState, useMemo, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { createPortal } from "react-dom";
 import { Archive, Download, ExternalLink, Heart, Lock, LockOpen, Trash2, X } from "lucide-react";
@@ -45,6 +45,14 @@ function DetailEditor({ resource, categories, onClose }: { resource: Resource; c
   const [setupPin, setSetupPin] = useState("");
   const [setupPinError, setSetupPinError] = useState("");
   const [title, setTitle] = useState(resource.title || resourceDisplayTitle(resource));
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [title]);
 
   useEffect(() => {
     setDescription(resource.description ?? "");
@@ -96,19 +104,16 @@ function DetailEditor({ resource, categories, onClose }: { resource: Resource; c
       <p className="eyebrow hud-meta" style={{ margin: 0 }}>{resource.metadata?.siteName ?? resource.type}</p>
       <IntentBadge intent={resource.intentType} />
     </div>
-    <input 
+    <textarea 
+      ref={textareaRef}
       id="detail-title"
+      className="detail-title-input"
       value={title}
+      rows={1}
       onChange={e => setTitle(e.target.value)}
       onBlur={persistTitle}
-      onKeyDown={e => { if (e.key === "Enter") { e.currentTarget.blur(); } }}
+      onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); } }}
       placeholder="Untitled"
-      style={{ 
-        fontSize: "24px", fontWeight: "bold", background: "transparent", 
-        border: "none", borderBottom: "1px solid transparent", color: "inherit", 
-        padding: 0, width: "100%", margin: "0 0 16px 0", outline: "none",
-        transition: "border-color 0.2s"
-      }}
       onFocus={e => e.currentTarget.style.borderBottom = "1px solid var(--accent)"}
       onBlurCapture={e => e.currentTarget.style.borderBottom = "1px solid transparent"}
     />

@@ -89,6 +89,8 @@ self.addEventListener('push', (event) => {
         body: data.body || '',
         icon: '/push-icon.svg',
         badge: '/notification-badge.svg',
+        vibrate: [200, 100, 200],
+        sound: '/notification.wav',
         data: { url: data.url || '/' },
         requireInteraction: true // Keeps notification visible until clicked or dismissed
       };
@@ -105,8 +107,10 @@ self.addEventListener('push', (event) => {
           body: options.body,
           icon: options.icon,
           badge: options.badge,
+          vibrate: options.vibrate,
+          sound: options.sound,
           data: options.data
-        });
+        } as any);
         console.log('[Service Worker] showNotification (fallback basic) succeeded.');
       }
     } catch (err) {

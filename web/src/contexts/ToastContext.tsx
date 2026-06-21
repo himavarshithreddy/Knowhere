@@ -34,6 +34,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     const id = Math.random().toString(36).substring(2, 9);
     setToasts((prev) => [...prev, { ...toast, id }]);
 
+    // Vibrate device if supported
+    if ("vibrate" in navigator) {
+      try {
+        navigator.vibrate([100, 50, 100]);
+      } catch (e) {}
+    }
 
     if (toast.duration !== 0) {
       setTimeout(() => removeToast(id), toast.duration || 5000);
