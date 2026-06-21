@@ -77,6 +77,11 @@ resourcesRouter.post("/", async (req, res) => {
         ...(classification.aiDescription ? { aiDescription: classification.aiDescription } : {})
       };
       
+      // If user did not fill the description, populate it with the AI-generated summary
+      if (!resolvedDesc && classification.aiDescription) {
+        updatePayload.description = classification.aiDescription;
+      }
+      
       // Only override intent if user didn't explicitly set one
       if (!intentType || intentType === "unclassified") {
         updatePayload.intentType = classification.intentType;

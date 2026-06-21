@@ -16,10 +16,6 @@ const getResourceContext = (r: ResourceDoc) => {
                  : r.type === "pdf" ? "document"
                  : r.type === "image" ? "image" 
                  : "note";
-                 
-  const tagsText = r.tags && r.tags.length > 0 
-    ? `tagged with [${r.tags.slice(0, 3).join(", ")}]` 
-    : "without tags";
     
   let ageDescription = "recently";
   if (ageDays > 0) {
@@ -29,7 +25,7 @@ const getResourceContext = (r: ResourceDoc) => {
     else ageDescription = `${Math.floor(ageDays / 30)} months ago`;
   }
   
-  return { typeText, tagsText, ageDescription };
+  return { typeText, ageDescription };
 };
 
 export const getTieredRecommendations = async (userId: string): Promise<RediscoverySuggestion[]> => {
@@ -78,10 +74,10 @@ export const getTieredRecommendations = async (userId: string): Promise<Rediscov
     if (r.intentType === ("idea" as any) && ageMs > elevenMonthsMs) {
       const overlap = r.tags?.some(t => recentTags.has(t));
       if (overlap) {
-        const { typeText, tagsText, ageDescription } = getResourceContext(r);
+        const { typeText, ageDescription } = getResourceContext(r);
         suggestions.push({
           resource: r,
-          reason: `This old ${typeText} idea was saved ${ageDescription} ${tagsText} and matches your recent interest tags. Resurrect it?`,
+          reason: `This old ${typeText} idea was saved ${ageDescription} and matches your recent interest topics. Resurrect it?`,
           tier: 2
         });
         continue;
@@ -91,10 +87,10 @@ export const getTieredRecommendations = async (userId: string): Promise<Rediscov
     // Inactivity Recovery: > 90 days, 0 views
     const hasOpen = interactions.some(i => String(i.resourceId) === String(r._id) && i.type === "open");
     if (ageMs > ninetyDaysMs && !hasOpen) {
-      const { typeText, tagsText, ageDescription } = getResourceContext(r);
+      const { typeText, ageDescription } = getResourceContext(r);
       suggestions.push({
         resource: r,
-        reason: `You saved this ${typeText} ${tagsText} ${ageDescription} and have never opened or reviewed it.`,
+        reason: `You saved this ${typeText} ${ageDescription} and have never opened or reviewed it.`,
         tier: 2
       });
       continue;
@@ -111,10 +107,10 @@ export const getTieredRecommendations = async (userId: string): Promise<Rediscov
       const resourceInteractions = interactions.filter(i => String(i.resourceId) === String(r._id));
       const hasUsed = resourceInteractions.some(i => i.type === "use" || i.type === "build" || i.type === "complete");
       if (!hasUsed && resourceInteractions.length > 0) {
-        const { typeText, tagsText, ageDescription } = getResourceContext(r);
+        const { typeText, ageDescription } = getResourceContext(r);
         suggestions.push({
           resource: r,
-          reason: `You saved and viewed this ${typeText} ${tagsText} ${ageDescription}, but never applied, built, or completed it. Knowledge is decaying.`,
+          reason: `You saved and viewed this ${typeText} ${ageDescription}, but never applied, built, or completed it. Knowledge is decaying.`,
           tier: 3
         });
       }
@@ -144,13 +140,13 @@ export const getDailyFallbackNotification = async (userId: string): Promise<Redi
   const unread = resources.filter(r => !interactions.some(i => String(i.resourceId) === String(r._id)));
   if (unread.length > 0) {
     const random = unread[Math.floor(Math.random() * unread.length)];
-    const { typeText, tagsText, ageDescription } = getResourceContext(random);
+    const { typeText, ageDescription } = getResourceContext(random);
     
     const templates = [
-      `A forgotten ${typeText} you saved ${ageDescription} ${tagsText}. Time to review?`,
-      `This unread ${typeText} ${tagsText} was captured ${ageDescription}. Don't let it drift away.`,
+      `A forgotten ${typeText} you saved ${ageDescription}. Time to review?`,
+      `This unread ${typeText} was captured ${ageDescription}. Don't let it drift away.`,
       `You hoarded this ${typeText} ${ageDescription}. Let's turn it into active knowledge.`,
-      `A random discovery from your vault saved ${ageDescription} ${tagsText} with 0 opens.`
+      `A random discovery from your vault saved ${ageDescription} with 0 opens.`
     ];
     const reason = templates[Math.floor(Math.random() * templates.length)];
     

@@ -99,7 +99,7 @@ Entropy Seed: "${entropySeed}"
 
 Instructions:
 1. Use the specific facts provided in the "Nebula Context" to tailor the notification specifically to this item.
-2. Focus heavily on the Resource Title and Resource Description to construct your message. Use concrete details from what this resource is actually about (from its description) to make the motivation highly specific and relevant. Avoid generic statements or relying heavily on tags.
+2. Focus heavily on the Resource Title and Resource Description to construct your message. Use concrete details from what this resource is actually about (from its description) to make the motivation highly specific and relevant. Do NOT make any use of tags, topics, or categories in the notification body; keep it strictly centered on the content and meaning of the title and description.
 3. ${randomStyle}
 4. ${randomVibe}
 5. Use an urgent, direct, and slightly challenging tone to break their procrastination. Wake them up.

@@ -46,7 +46,7 @@ Task 1: Determine the user's intent for saving this resource.
 - "knowledge": if it's a tutorial, article, reference, guide, or tool that doesn't fit the above.
 - "unclassified": if you cannot determine the intent.
 
-Task 2: Extract 1-5 broad topic tags (e.g., "react", "marketing", "fitness", "android"). Tags MUST strictly be single words. Do not use multi-word phrases. Use lowercase alphanumeric characters and hyphens only.
+Task 2: Extract 1-5 highly relevant topic tags or phrases based on the subject, theme, and specific content described in the title and description. Do NOT just tag based on the format (e.g., do not just tag as "video" or "article" unless the content itself is about videography). Tags can be multi-word phrases (e.g., "web development", "react native", "fitness tracking"). Use lowercase alphanumeric characters, spaces, and hyphens only.
 
 Task 3: Generate a short, 1-2 sentence description summarizing what this resource is and why it might be useful. Do not use emojis.`,
         config: {
@@ -61,7 +61,7 @@ Task 3: Generate a short, 1-2 sentence description summarizing what this resourc
               tags: {
                 type: Type.ARRAY,
                 items: { type: Type.STRING },
-                description: "1 to 5 strictly single-word lowercase tags",
+                description: "1 to 5 highly relevant topic tags or phrases (can be multiple words, e.g., 'machine learning', 'web design') based on the content, subject, and theme, not just the format",
               },
               aiDescription: {
                 type: Type.STRING,
@@ -116,13 +116,11 @@ const fallbackClassification = (content: string, url?: string): ClassificationRe
 
   const tags = new Set<string>();
   
-  // Check URL domain for hints (e.g. github -> development)
+  // Check URL domain for hints
   if (url) {
     try {
       const hostname = new URL(url).hostname;
-      if (hostname.includes("github") || hostname.includes("stackoverflow")) tags.add("development");
-      if (hostname.includes("youtube")) tags.add("video");
-      if (hostname.includes("medium") || hostname.includes("substack")) tags.add("article");
+      if (hostname.includes("github") || hostname.includes("stackoverflow")) tags.add("open source");
     } catch {
       // invalid URL, ignore
     }

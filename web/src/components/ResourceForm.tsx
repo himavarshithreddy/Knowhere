@@ -218,16 +218,37 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
         type: "success"
       });
 
-      if (savedResource.tags && savedResource.tags.length > 0) {
-        api.getRelatedResources(savedResource.id).then(res => {
-          if (res.related.length > 0) {
-            addToast({
-              message: `You have ${res.related.length} other items related to these topics.`,
-              type: "info"
-            });
+      // Poll for background AI task completion
+      let attempts = 0;
+      const pollTimer = setInterval(async () => {
+        attempts++;
+        if (attempts > 12) {
+          clearInterval(pollTimer);
+          return;
+        }
+        try {
+          const all = await api.getResources();
+          const updated = all.find((r) => r.id === savedResource.id);
+          // AI task is considered done if it has tags, aiDescription, or if we just want to stop polling
+          if (updated && (updated.tags?.length > 0 || (updated as any).aiDescription)) {
+            clearInterval(pollTimer);
+            await refresh({ background: true }); // Update context state silently
+            
+            if (updated.tags && updated.tags.length > 0) {
+              api.getRelatedResources(updated.id).then(res => {
+                if (res.related.length > 0) {
+                  addToast({
+                    message: `You have ${res.related.length} other items related to these topics.`,
+                    type: "info"
+                  });
+                }
+              }).catch(err => console.error(err));
+            }
           }
-        }).catch(err => console.error(err));
-      }
+        } catch (e) {
+          // ignore network errors during polling
+        }
+      }, 3000);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not save. Your entries are still here.");
       setStatus("idle");
@@ -270,7 +291,7 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
             
             <div className="field"><label htmlFor="resource-description">Why does this belong in your archive?</label>
               <textarea id="resource-description" value={description} onChange={(e) => setDescription(e.target.value)}
-                rows={4} placeholder="Context for future retrieval" required /></div>
+                rows={4} placeholder="Context for future retrieval" /></div>
           </div>
           
           <div className="form-col-right">

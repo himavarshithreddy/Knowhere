@@ -136,7 +136,7 @@ function DetailEditor({ resource, categories, onClose }: { resource: Resource; c
         onBlur={persist} rows={4} />
       {saved && <small className="saved">Saved</small>}
     </label>
-    {(resource as any).aiDescription && (
+    {(resource as any).aiDescription && (resource as any).aiDescription !== resource.description && (
       <div className="ai-description" style={{ marginTop: "-8px", marginBottom: "16px", padding: "12px", backgroundColor: "var(--bg-tertiary)", borderRadius: "8px", fontSize: "14px", color: "var(--text-secondary)", borderLeft: "2px solid rgba(168, 85, 247, 0.5)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px", fontSize: "12px", color: "var(--text-primary)", fontWeight: 500 }}>
            AI Summary
