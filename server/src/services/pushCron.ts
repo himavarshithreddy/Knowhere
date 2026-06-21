@@ -4,6 +4,7 @@ import OpenAI from "openai";
 import { User, Resource } from "../models/index.js";
 import { getDailyFallbackNotification } from "./rediscovery.js";
 import { config } from "../config.js";
+import { createChatCompletionWithDynamicTokens } from "../utils/ai.js";
 
 let ai: OpenAI | null = null;
 if (config.openRouterKey) {
@@ -43,11 +44,15 @@ export const generatePushPayloadsForUser = async (userId: string) => {
           try {
             const prompt = `You are Knowhere, an uncompromising AI mission control. The user has a mission named "${mission.title}" that is ${daysLeft === 0 ? "due today" : `overdue by ${Math.abs(daysLeft)} days`}.
 Write a highly intense, urgent, and punchy push notification body (1 to 2 short sentences, max 120 characters) that holds them strictly accountable, breaks their procrastination, and pushes them to work immediately. Use a commanding, direct tone that makes procrastination uncomfortable. Do not include the title in the body. Do not use quotes. Do not use emojis under any circumstances.`;
-            const response = await ai.chat.completions.create({
-              model: "google/gemini-2.5-flash",
-              messages: [{ role: "user", content: prompt }],
-              temperature: 0.7
-            });
+            const response = await createChatCompletionWithDynamicTokens(
+              ai,
+              {
+                model: "google/gemini-2.5-flash",
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.7
+              },
+              200
+            );
             const content = response.choices[0]?.message?.content;
             if (content) body = content.trim();
           } catch (e) { /* ignore and fallback */ }
@@ -113,11 +118,15 @@ Instructions:
 5. Use an urgent, direct, and slightly challenging tone to break their procrastination. Wake them up.
 6. You may creatively reference the title or topic, but keep the overall length extremely punchy (under 120 characters).
 7. Do not use quotes or emojis under any circumstances.`;
-        const response = await ai.chat.completions.create({
-          model: "google/gemini-2.5-flash",
-          messages: [{ role: "user", content: prompt }],
-          temperature: 0.95
-        });
+        const response = await createChatCompletionWithDynamicTokens(
+          ai,
+          {
+            model: "google/gemini-2.5-flash",
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.95
+          },
+          200
+        );
         const content = response.choices[0]?.message?.content;
         if (content) body = content.trim();
       } catch (e) { /* ignore and fallback */ }
@@ -178,6 +187,6 @@ export const startPushCron = () => {
   // Run every day at 11:00 AM
   cron.schedule("0 11 * * *", runPushJob);
   
-  // Run every day at 6:30 PM (18:30)
-  cron.schedule("30 18 * * *", runPushJob);
+  // Run every day at 7:00 PM (19:00)
+  cron.schedule("0 19 * * *", runPushJob);
 };

@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { config } from "../config.js";
+import { createChatCompletionWithDynamicTokens } from "../utils/ai.js";
 import type { IntentType, ExtractedMetadata } from "@knowhere/shared";
 
 // Create the OpenAI client for OpenRouter. We initialize it lazily if needed.
@@ -51,11 +52,13 @@ Task 2: Extract 1-5 highly relevant topic tags or phrases based on the subject, 
 
 Task 3: Generate a short, 1-2 sentence description summarizing what this resource is and why it might be useful. Do not use emojis.`;
 
-      const response = await ai.chat.completions.create({
-        model: "google/gemini-2.5-flash",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.1,
-        response_format: {
+      const response = await createChatCompletionWithDynamicTokens(
+        ai,
+        {
+          model: "google/gemini-2.5-flash",
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.1,
+          response_format: {
           type: "json_schema",
           json_schema: {
             name: "classification_result",
@@ -82,7 +85,7 @@ Task 3: Generate a short, 1-2 sentence description summarizing what this resourc
             }
           }
         }
-      });
+      }, 1000);
 
       const content = response.choices[0]?.message?.content;
       if (content) {

@@ -1,6 +1,7 @@
 import { Resource, InteractionEvent, type ResourceDoc } from "../models/index.js";
 import OpenAI from "openai";
 import { config } from "../config.js";
+import { createChatCompletionWithDynamicTokens } from "../utils/ai.js";
 
 let ai: OpenAI | null = null;
 if (config.openRouterKey) {
@@ -94,11 +95,13 @@ Instructions:
 5. "forecasts": 1 prediction based on intent/action momentum.
 6. "actionableAdvice": 1-2 specific actions to improve their knowledge system today.`;
 
-    const response = await ai.chat.completions.create({
-      model: "google/gemini-2.5-flash",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.1,
-      response_format: {
+    const response = await createChatCompletionWithDynamicTokens(
+      ai,
+      {
+        model: "google/gemini-2.5-flash",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.1,
+        response_format: {
         type: "json_schema",
         json_schema: {
           name: "dashboard_intelligence",
@@ -164,7 +167,7 @@ Instructions:
           }
         }
       }
-    });
+    }, 2000);
 
     const content = response.choices[0]?.message?.content;
     if (content) {
