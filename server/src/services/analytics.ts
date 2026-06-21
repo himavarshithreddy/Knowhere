@@ -1,10 +1,13 @@
 import { Resource, InteractionEvent, type ResourceDoc } from "../models/index.js";
-import { GoogleGenAI, Type } from "@google/genai";
+import OpenAI from "openai";
 import { config } from "../config.js";
 
-let ai: GoogleGenAI | null = null;
-if (config.geminiApiKey) {
-  ai = new GoogleGenAI({ apiKey: config.geminiApiKey });
+let ai: OpenAI | null = null;
+if (config.openRouterKey) {
+  ai = new OpenAI({ 
+    baseURL: "https://openrouter.ai/api/v1",
+    apiKey: config.openRouterKey 
+  });
 }
 
 export const getAdvancedAnalytics = async (userId: string) => {
@@ -72,9 +75,7 @@ export const generateDashboardIntelligence = async (userId: string): Promise<any
   if (!ai) return null;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `You are Nebula, Knowhere's elite intelligence layer.
+    const prompt = `You are Nebula, Knowhere's elite intelligence layer.
 Analyze these Memory, Intent, and Action analytics to generate a structured insights report.
 
 Raw Stats:
@@ -91,68 +92,83 @@ Instructions:
 3. "trends": 1-2 patterns (e.g. "High hoarding, low activation"). Give an iconName (Activity, TrendingUp, Target, Brain, Sparkles, AlertCircle).
 4. "anomalies": 0-2 anomalies (e.g., hoarding without reviewing).
 5. "forecasts": 1 prediction based on intent/action momentum.
-6. "actionableAdvice": 1-2 specific actions to improve their knowledge system today.`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-             summary: { type: Type.STRING },
+6. "actionableAdvice": 1-2 specific actions to improve their knowledge system today.`;
+
+    const response = await ai.chat.completions.create({
+      model: "google/gemini-2.5-flash",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.1,
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "dashboard_intelligence",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+             summary: { type: "string" },
              keyMetrics: {
-               type: Type.ARRAY,
+               type: "array",
                items: {
-                 type: Type.OBJECT,
+                 type: "object",
                  properties: {
-                   label: { type: Type.STRING },
-                   value: { type: Type.STRING },
-                   trend: { type: Type.STRING },
-                   trendDirection: { type: Type.STRING, enum: ["up", "down", "flat"] },
-                   color: { type: Type.STRING, enum: ["green", "red", "yellow", "blue"] }
+                   label: { type: "string" },
+                   value: { type: "string" },
+                   trend: { type: "string" },
+                   trendDirection: { type: "string", enum: ["up", "down", "flat"] },
+                   color: { type: "string", enum: ["green", "red", "yellow", "blue"] }
                  },
-                 required: ["label", "value", "trend", "trendDirection", "color"]
+                 required: ["label", "value", "trend", "trendDirection", "color"],
+                 additionalProperties: false
                }
              },
              trends: {
-               type: Type.ARRAY,
+               type: "array",
                items: {
-                 type: Type.OBJECT,
-                 properties: { title: { type: Type.STRING }, description: { type: Type.STRING }, iconName: { type: Type.STRING } },
-                 required: ["title", "description", "iconName"]
+                 type: "object",
+                 properties: { title: { type: "string" }, description: { type: "string" }, iconName: { type: "string" } },
+                 required: ["title", "description", "iconName"],
+                 additionalProperties: false
                }
              },
              anomalies: {
-               type: Type.ARRAY,
+               type: "array",
                items: {
-                 type: Type.OBJECT,
-                 properties: { description: { type: Type.STRING }, severity: { type: Type.STRING, enum: ["low", "medium", "high"] } },
-                 required: ["description", "severity"]
+                 type: "object",
+                 properties: { description: { type: "string" }, severity: { type: "string", enum: ["low", "medium", "high"] } },
+                 required: ["description", "severity"],
+                 additionalProperties: false
                }
              },
              forecasts: {
-               type: Type.ARRAY,
+               type: "array",
                items: {
-                 type: Type.OBJECT,
-                 properties: { prediction: { type: Type.STRING }, timeframe: { type: Type.STRING } },
-                 required: ["prediction", "timeframe"]
+                 type: "object",
+                 properties: { prediction: { type: "string" }, timeframe: { type: "string" } },
+                 required: ["prediction", "timeframe"],
+                 additionalProperties: false
                }
              },
              actionableAdvice: {
-               type: Type.ARRAY,
+               type: "array",
                items: {
-                 type: Type.OBJECT,
-                 properties: { action: { type: Type.STRING }, reason: { type: Type.STRING } },
-                 required: ["action", "reason"]
+                 type: "object",
+                 properties: { action: { type: "string" }, reason: { type: "string" } },
+                 required: ["action", "reason"],
+                 additionalProperties: false
                }
              }
-          },
-          required: ["summary", "keyMetrics", "trends", "anomalies", "forecasts", "actionableAdvice"]
-        },
-        temperature: 0.1
+            },
+            required: ["summary", "keyMetrics", "trends", "anomalies", "forecasts", "actionableAdvice"],
+            additionalProperties: false
+          }
+        }
       }
     });
 
-    if (response.text) {
-      return JSON.parse(response.text);
+    const content = response.choices[0]?.message?.content;
+    if (content) {
+      return JSON.parse(content);
     }
   } catch (err) {
     console.error("Failed to generate intelligence:", err);

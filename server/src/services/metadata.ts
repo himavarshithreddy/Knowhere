@@ -1,5 +1,12 @@
 import * as cheerio from "cheerio";
 import { assertSafePublicUrl, safeFetch } from "../utils/security.js";
+import { fetchWithBrowser } from "./browser.js";
+import { LRUCache } from "lru-cache";
+
+const metadataCache = new LRUCache<string, any>({
+  max: 1000,
+  ttl: 1000 * 60 * 60 * 24, // 24 hours caching
+});
 
 function isProfilePreviewImage(imageUrl?: string) {
   if (!imageUrl) return false;
@@ -100,43 +107,94 @@ function pickPreviewImage(
 
 export async function extractMetadata(rawUrl: string) {
   const url = await assertSafePublicUrl(rawUrl);
+  const cacheKey = url.toString();
+  
+  if (metadataCache.has(cacheKey)) {
+    return metadataCache.get(cacheKey);
+  }
+
   const socialPost = isXStatusUrl(url) || isLinkedInPostUrl(url);
 
   if (isXStatusUrl(url)) {
     const oembed = await fetchTwitterOEmbed(url.toString());
     if (oembed?.html) {
       const tweetText = extractTweetTextFromOembed(oembed.html);
-      return {
+      const result = {
         title: oembed.author_name ? `${oembed.author_name} on X` : "Post on X",
         description: tweetText || undefined,
         siteName: "X",
         author: oembed.author_name,
         faviconUrl: `${url.origin}/favicon.ico`
       };
+      metadataCache.set(cacheKey, result);
+      return result;
     }
   }
 
   if (isYouTubeUrl(url)) {
     const oembed = await fetchYouTubeOEmbed(url.toString());
     if (oembed?.title) {
-      return {
+      const result = {
         title: oembed.title,
         siteName: "YouTube",
         author: oembed.author_name,
         imageUrl: oembed.thumbnail_url,
         faviconUrl: `https://www.youtube.com/favicon.ico`
       };
+      metadataCache.set(cacheKey, result);
+      return result;
     }
   }
 
+  const hostname = url.hostname.replace(/^www\./, "");
+  
+  // Site fingerprinting
+  const playWrightOnlyDomains = ["notion.site", "notion.so"];
+  const httpOnlyDomains = ["github.com", "medium.com"];
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
+  
   try {
-    const response = await safeFetch(url.toString(), controller.signal);
-    if (!response.ok) throw new Error(`Source returned ${response.status}.`);
-    const length = Number(response.headers.get("content-length") ?? 0);
-    if (length > 2_000_000) throw new Error("Page is too large to preview.");
-    const html = (await response.text()).slice(0, 2_000_000);
+    let html = "";
+    
+    if (playWrightOnlyDomains.includes(hostname)) {
+      throw new Error(`Site Fingerprint: Fast-tracking Playwright for ${hostname}`);
+    }
+
+    try {
+      const response = await safeFetch(url.toString(), controller.signal);
+      if (!response.ok) throw new Error(`Source returned ${response.status}.`);
+      const length = Number(response.headers.get("content-length") ?? 0);
+      if (length > 2_000_000) throw new Error("Page is too large to preview.");
+      html = (await response.text()).slice(0, 2_000_000);
+      
+      // Advanced Bot Wall Detection
+      if (
+        html.includes("<title>Just a moment...</title>") || 
+        html.includes("Enable JavaScript and cookies") ||
+        html.includes("Please enable JS and disable any ad blocker") ||
+        html.includes("Verify you are human") ||
+        html.includes("cf-challenge") ||
+        html.includes("PerimeterX") ||
+        html.includes("DataDome") ||
+        html.includes("g-recaptcha") ||
+        (hostname === "medium.com" && !html.includes("og:title"))
+      ) {
+        throw new Error("Bot challenge or unrendered JS detected.");
+      }
+    } catch (tier1Error) {
+      if (httpOnlyDomains.includes(hostname)) {
+        throw new Error(`Site Fingerprint: ${hostname} is HTTP-only. Skipping Playwright fallback.`);
+      }
+
+      console.warn(`[Metadata] Tier 1 fetch failed for ${hostname}:`, tier1Error instanceof Error ? tier1Error.message : String(tier1Error));
+      console.log(`[Metadata] Falling back to Tier 2 (Playwright) for ${hostname}`);
+      
+      clearTimeout(timeout); // We will rely on Playwright's timeout
+      html = await fetchWithBrowser(url.toString(), 15000);
+    }
+
     const $ = cheerio.load(html);
     const content = (property: string) =>
       $(`meta[property="${property}"]`).attr("content") ??
@@ -146,10 +204,22 @@ export async function extractMetadata(rawUrl: string) {
       try { return new URL(candidate, url).toString(); } catch { return undefined; }
     };
 
-    const title = content("og:title")
+    let title = content("og:title")
       ?? content("twitter:title")
-      ?? $("title").first().text().trim()
-      ?? url.hostname.replace(/^www\./, "");
+      ?? $("title").first().text().trim();
+      
+    if (!title || title.toLowerCase() === hostname.toLowerCase()) {
+      title = fallbackTitleFromUrl(url);
+    }
+
+    // LinkedIn Auth Wall Fallback
+    if (title === "Sign Up | LinkedIn" || title === "LinkedIn Login, Sign in | LinkedIn" || title.includes("Log In") || title.includes("Login")) {
+      const fallback = fallbackTitleFromUrl(url);
+      if (fallback !== hostname) {
+        title = fallback;
+      }
+    }
+
     const description = content("og:description")
       ?? content("twitter:description")
       ?? content("description");
@@ -160,21 +230,97 @@ export async function extractMetadata(rawUrl: string) {
       absolute(content("twitter:image:src"))
     ], url, socialPost);
 
-    return {
+    const domainParts = hostname.split(".");
+    const siteName = content("og:site_name") ?? domainParts[domainParts.length - 2] ?? hostname;
+    const siteNameCapitalized = siteName.charAt(0).toUpperCase() + siteName.slice(1);
+
+    const result = {
       title,
       description: description?.trim() || undefined,
       imageUrl,
       faviconUrl: absolute($('link[rel~="icon"]').first().attr("href")) ?? `${url.origin}/favicon.ico`,
-      siteName: content("og:site_name") ?? url.hostname.replace(/^www\./, ""),
+      siteName: siteNameCapitalized,
       author: content("author") ?? content("article:author")
     };
-  } catch {
-    return {
-      title: url.hostname.replace(/^www\./, ""),
-      siteName: url.hostname,
+    
+    metadataCache.set(cacheKey, result);
+    return result;
+
+  } catch (error) {
+    const fallbackTitle = fallbackTitleFromUrl(url);
+    const domainParts = hostname.split(".");
+    const siteName = domainParts[domainParts.length - 2] ?? hostname;
+    const siteNameCapitalized = siteName.charAt(0).toUpperCase() + siteName.slice(1);
+    
+    const result = {
+      title: fallbackTitle,
+      siteName: siteNameCapitalized,
       previewUnavailable: true
     };
+    
+    metadataCache.set(cacheKey, result);
+    return result;
   } finally {
     clearTimeout(timeout);
   }
+}
+
+function fallbackTitleFromUrl(url: URL): string {
+  const hostname = url.hostname.replace(/^www\./, "");
+  const domainParts = hostname.split(".");
+  const siteName = domainParts[domainParts.length - 2] || hostname;
+  const siteNameCapitalized = siteName.charAt(0).toUpperCase() + siteName.slice(1);
+
+  if (hostname.includes("linkedin.com") && url.pathname.startsWith("/in/")) {
+    const parts = url.pathname.split("/").filter(Boolean);
+    const username = parts[1];
+    if (username) {
+      const cleanName = username
+        .split("-")
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+      return `${cleanName} | LinkedIn`;
+    }
+  }
+
+  if (hostname.includes("medium.com")) {
+    const parts = url.pathname.split("/").filter(Boolean);
+    let slug = pathPartsLast(parts);
+    if (slug) {
+      slug = slug.replace(/-[a-f0-9]+$/, ""); 
+      const cleanTitle = slug
+        .split("-")
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+      return `${cleanTitle} | Medium`;
+    }
+  }
+
+  if (hostname.includes("github.com")) {
+    const parts = url.pathname.split("/").filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0]}/${parts[1]} | GitHub`;
+    }
+  }
+
+  const pathParts = url.pathname.split("/").filter(Boolean);
+  if (pathParts.length > 0) {
+    let lastSegment = pathParts[pathParts.length - 1];
+    lastSegment = lastSegment.replace(/\.[^/.]+$/, "").replace(/-[a-f0-9]{8,}$/i, "");
+    const cleanSegment = lastSegment
+      .split(/[-_]/)
+      .filter(Boolean)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+    
+    if (cleanSegment.length > 2) {
+      return `${cleanSegment} | ${siteNameCapitalized}`;
+    }
+  }
+
+  return hostname;
+}
+
+function pathPartsLast(parts: string[]): string | undefined {
+  return parts.length > 0 ? parts[parts.length - 1] : undefined;
 }

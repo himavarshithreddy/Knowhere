@@ -24,6 +24,7 @@ import { resourcesRouter } from "./routes/resources.js";
 import { statsRouter } from "./routes/stats.js";
 import { vaultRouter } from "./routes/vault.js";
 import { pushRouter } from "./routes/push.js";
+import { browserMetrics } from "./services/browser.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -48,7 +49,7 @@ async function main() {
   app.use(express.json({ limit: "2mb" }));
   app.use(cookieParser() as never);
 
-  app.get("/api/health", (_req, res) => res.json({ ok: true }));
+  app.get("/api/health", (_req, res) => res.json({ ok: true, browser: browserMetrics }));
 
   app.use("/api/auth", authRouter);
   app.use("/api/auth/coords", coordsAuthRouter);

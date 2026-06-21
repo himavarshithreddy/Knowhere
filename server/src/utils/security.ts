@@ -32,7 +32,11 @@ export async function safeFetch(rawUrl: string, signal: AbortSignal) {
     const response = await fetch(url, {
       signal,
       redirect: "manual",
-      headers: { "user-agent": "KnowherePreview/1.0", accept: "text/html" }
+      headers: { 
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36", 
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "accept-language": "en-US,en;q=0.9"
+      }
     });
     if (response.status < 300 || response.status >= 400) return response;
     const location = response.headers.get("location");

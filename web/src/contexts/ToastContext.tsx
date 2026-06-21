@@ -34,13 +34,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     const id = Math.random().toString(36).substring(2, 9);
     setToasts((prev) => [...prev, { ...toast, id }]);
 
-    // Play notification chime sound
-    try {
-      const audio = new Audio("/notification.wav");
-      audio.volume = 0.4;
-      audio.play().catch(() => {});
-    } catch (e) {}
-
     // Vibrate device if supported
     if ("vibrate" in navigator) {
       try {

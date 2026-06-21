@@ -1,11 +1,14 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import OpenAI from "openai";
 import { config } from "../config.js";
 import type { IntentType, ExtractedMetadata } from "@knowhere/shared";
 
-// Create the Gemini client. We initialize it lazily if needed.
-let ai: GoogleGenAI | null = null;
-if (config.geminiApiKey) {
-  ai = new GoogleGenAI({ apiKey: config.geminiApiKey });
+// Create the OpenAI client for OpenRouter. We initialize it lazily if needed.
+let ai: OpenAI | null = null;
+if (config.openRouterKey) {
+  ai = new OpenAI({ 
+    baseURL: "https://openrouter.ai/api/v1",
+    apiKey: config.openRouterKey 
+  });
 }
 
 export interface ClassificationResult {
@@ -32,9 +35,7 @@ export const classifyResource = async (
   // If Gemini is available, use it for intelligent classification
   if (ai) {
     try {
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: `Analyze the following saved web resource or note content and classify it.
+      const prompt = `Analyze the following saved web resource or note content and classify it.
         
 Content:
 """
@@ -48,34 +49,44 @@ Task 1: Determine the user's intent for saving this resource.
 
 Task 2: Extract 1-5 highly relevant topic tags or phrases based on the subject, theme, and specific content described in the title and description. Do NOT just tag based on the format (e.g., do not just tag as "video" or "article" unless the content itself is about videography). Tags can be multi-word phrases (e.g., "web development", "react native", "fitness tracking"). Use lowercase alphanumeric characters, spaces, and hyphens only.
 
-Task 3: Generate a short, 1-2 sentence description summarizing what this resource is and why it might be useful. Do not use emojis.`,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              intentType: {
-                type: Type.STRING,
-                enum: ["unclassified", "knowledge", "mission"],
+Task 3: Generate a short, 1-2 sentence description summarizing what this resource is and why it might be useful. Do not use emojis.`;
+
+      const response = await ai.chat.completions.create({
+        model: "google/gemini-2.5-flash",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.1,
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "classification_result",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                intentType: {
+                  type: "string",
+                  enum: ["unclassified", "knowledge", "mission"]
+                },
+                tags: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "1 to 5 highly relevant topic tags or phrases based on the content, subject, and theme, not just the format"
+                },
+                aiDescription: {
+                  type: "string",
+                  description: "A short, 1-2 sentence description or summary of what this resource is and why it's useful. Do not use emojis."
+                }
               },
-              tags: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-                description: "1 to 5 highly relevant topic tags or phrases (can be multiple words, e.g., 'machine learning', 'web design') based on the content, subject, and theme, not just the format",
-              },
-              aiDescription: {
-                type: Type.STRING,
-                description: "A short, 1-2 sentence description or summary of what this resource is and why it's useful. Do not use emojis.",
-              }
-            },
-            required: ["intentType", "tags", "aiDescription"],
-          },
-          temperature: 0.1,
-        },
+              required: ["intentType", "tags", "aiDescription"],
+              additionalProperties: false
+            }
+          }
+        }
       });
 
-      if (response.text) {
-        const result = JSON.parse(response.text);
+      const content = response.choices[0]?.message?.content;
+      if (content) {
+        const result = JSON.parse(content);
         return {
           intentType: result.intentType as IntentType,
           tags: result.tags || [],
