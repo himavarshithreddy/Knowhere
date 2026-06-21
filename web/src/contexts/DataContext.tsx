@@ -11,7 +11,7 @@ type ResourceInput = {
 type DataState = {
   profile: UserProfile | null; categories: Category[]; resources: Resource[];
   loading: boolean; error: string; uploadProgress: number;
-  refresh: () => Promise<void>;
+  refresh: (options?: { background?: boolean }) => Promise<void>;
   saveResource: (input: ResourceInput) => Promise<Resource>;
   updateResource: (id: string, patch: Partial<Resource>) => Promise<void>;
   recordView: (id: string, type?: string) => Promise<void>;
