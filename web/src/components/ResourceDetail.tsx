@@ -149,7 +149,7 @@ function DetailEditor({ resource, categories, onClose }: { resource: Resource; c
         {(resource as any).aiDescription}
       </div>
     )}
-    <div style={{ display: "flex", gap: "12px" }}>
+    <div className="detail-meta-fields">
       <label className="field" style={{ flex: 1 }}>
         <span>Cluster</span>
         <select value={resource.categoryId}

@@ -382,6 +382,8 @@ h1,h2,h3,p { margin-top: 0; }
 .detail-scroll { overflow-y: auto; flex: 1; min-height: 0; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--muted) 55%, transparent) transparent; }
 .resource-form .form-scroll { padding: 23.8px 27.2px 27.2px; display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 34px; }
 .field { display: grid; gap: 5.95px; margin-bottom: 14.45px; position: relative; }.field label,.field > span { font-size: 10.2px; font-weight: 600; }
+.detail-meta-fields { display: flex; gap: 11.9px; }
+.detail-meta-fields .field { margin-bottom: 0; flex: 1; }
 .resource-form .field { gap: 8.5px; margin-bottom: 16px; }
 .resource-form .field label,.resource-form .field > span { font-size: 11.05px; }
 .field input,.field textarea,.field select,.category-create input,.category-row input { width: 100%; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 7.65px; padding: 9.35px 10.2px; resize: vertical; }
@@ -613,6 +615,8 @@ h1,h2,h3,p { margin-top: 0; }
 
   /* ── Detail panel mobile ── */
   .detail-panel { width: 100%; height: 100%; max-height: none; border-radius: 0; }
+  .detail-meta-fields { flex-direction: column; gap: 8.5px; }
+  .detail-meta-fields .field select { padding: 6.8px 10.2px; font-size: 13.6px; min-height: 35.7px; }
   /* Override full-screen detail-panel styles for the compact vault modal */
   .detail-panel.vault-modal { 
     width: calc(100% - 32px); 

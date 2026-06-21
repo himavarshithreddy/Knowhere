@@ -92,7 +92,8 @@ pushRouter.post("/test", async (req, res) => {
     try {
       await webpush.sendNotification(
         { endpoint: sub.endpoint, keys: sub.keys as any },
-        payload
+        payload,
+        { headers: { Urgency: "high" }, TTL: 86400 }
       );
       console.log(`[Push Test] Successfully sent test notification to endpoint: ${sub.endpoint}`);
       sentCount++;
@@ -143,7 +144,11 @@ pushRouter.post("/trigger-daily", async (req, res) => {
       const sub = user.pushSubscriptions[i];
       console.log(`[Push Daily] Sending payload to endpoint: ${sub.endpoint}`);
       try {
-        await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys as any }, payload);
+        await webpush.sendNotification(
+          { endpoint: sub.endpoint, keys: sub.keys as any }, 
+          payload,
+          { headers: { Urgency: "high" }, TTL: 86400 }
+        );
         console.log(`[Push Daily] Successfully sent notification to endpoint: ${sub.endpoint}`);
         sentCount++;
       } catch (err: any) {

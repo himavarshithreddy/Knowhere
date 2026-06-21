@@ -163,7 +163,8 @@ export const startPushCron = () => {
             try {
               await webpush.sendNotification(
                 { endpoint: sub.endpoint, keys: sub.keys as any },
-                payload
+                payload,
+                { headers: { Urgency: "high" }, TTL: 86400 }
               );
             } catch (err: any) {
               if (err.statusCode === 410 || err.statusCode === 404) {
