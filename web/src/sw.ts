@@ -85,14 +85,16 @@ self.addEventListener('push', (event) => {
       }
       
       const title = data.title || 'Knowhere';
+      const notifTag = `knowhere-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       const options = {
         body: data.body || '',
-        icon: '/push-icon.svg',
+        icon: '/pwa-192x192.png',
         badge: '/notification-badge.svg',
-        vibrate: [200, 100, 200],
-        silent: false,
+        tag: notifTag,
+        renotify: true,
+        timestamp: Date.now(),
         data: { url: data.url || '/', ackToken: data.ackToken },
-        requireInteraction: true // Keeps notification visible until clicked or dismissed
+        requireInteraction: true
       };
 
       console.log('[Service Worker] Attempting to show notification:', title, options);
@@ -107,8 +109,9 @@ self.addEventListener('push', (event) => {
           body: options.body,
           icon: options.icon,
           badge: options.badge,
-          vibrate: options.vibrate,
-          silent: false,
+          tag: options.tag,
+          renotify: true,
+          timestamp: options.timestamp,
           data: options.data
         } as any);
         console.log('[Service Worker] showNotification (fallback basic) succeeded.');
