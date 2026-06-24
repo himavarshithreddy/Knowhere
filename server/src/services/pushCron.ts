@@ -2,6 +2,8 @@ import cron from "node-cron";
 import webpush from "web-push";
 import OpenAI from "openai";
 import { User, Resource } from "../models/index.js";
+import { NotificationLedger } from "../models/EventLog.js";
+import { signAckToken } from "../routes/push.js";
 import { getDailyFallbackNotification } from "./rediscovery.js";
 import { config } from "../config.js";
 import { createChatCompletionWithDynamicTokens } from "../utils/ai.js";
@@ -15,7 +17,7 @@ if (config.openRouterKey) {
 }
 
 export const generatePushPayloadsForUser = async (userId: string) => {
-  const notificationsToSend: { title: string; body: string; url: string }[] = [];
+  const notificationsToSend: { title: string; body: string; url: string; ackToken?: string }[] = [];
   
   // 1. Check for overdue missions
   const activeMissions = await Resource.find({
@@ -133,10 +135,35 @@ Instructions:
     }
 
     const shortTitle = resourceTitle.length > 40 ? resourceTitle.substring(0, 37) + "..." : resourceTitle;
+    
+    let ackToken: string | undefined = undefined;
+    try {
+      const ledgerEntry = await NotificationLedger.create({
+        userId,
+        resourceId: String(fallback.resource._id),
+        tier: fallback.tier,
+        selectionReason: fallback.selectionReason ?? "unknown"
+      });
+      ackToken = signAckToken(String(ledgerEntry._id));
+      
+      console.log('[pushCron] notification_sent', JSON.stringify({
+        userId,
+        resourceId: String(fallback.resource._id),
+        tier: fallback.tier,
+        selectionReason: fallback.selectionReason ?? "unknown",
+        wasEscapeHatch: fallback.wasEscapeHatch ?? false,
+        engagementLevel: fallback.engagementLevel ?? "unknown",
+        impressionCount: fallback.impressionCount ?? 0,
+      }));
+    } catch (err) {
+      console.error('[pushCron] Failed to record notification history', { userId, err });
+    }
+
     notificationsToSend.push({
       title: `Nebula: ${shortTitle}`,
       body,
-      url: `/library?resource=${fallback.resource._id}`
+      url: `/library?resource=${fallback.resource._id}`,
+      ...(ackToken ? { ackToken } : {})
     });
   }
 

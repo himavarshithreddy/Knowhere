@@ -1,7 +1,9 @@
 import { Router } from "express";
 import webpush from "web-push";
 import { requireAuth } from "../middleware/auth.js";
+import crypto from "node:crypto";
 import { User } from "../models/index.js";
+import { NotificationLedger } from "../models/EventLog.js";
 import { generatePushPayloadsForUser } from "../services/pushCron.js";
 import { config } from "../config.js";
 
@@ -17,6 +19,52 @@ try {
 }
 
 export const pushRouter = Router();
+
+export function signAckToken(notifId: string): string {
+  const hmac = crypto.createHmac("sha256", config.jwtSecret);
+  hmac.update(notifId);
+  return `${notifId}.${hmac.digest("hex")}`;
+}
+
+export function verifyAckToken(ackToken: string): string | null {
+  const dotIndex = ackToken.lastIndexOf(".");
+  if (dotIndex === -1) return null;
+
+  const notifId = ackToken.substring(0, dotIndex);
+  const signature = ackToken.substring(dotIndex + 1);
+
+  const hmac = crypto.createHmac("sha256", config.jwtSecret);
+  hmac.update(notifId);
+  const expected = hmac.digest("hex");
+
+  if (signature.length !== expected.length) return null;
+  const valid = crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+
+  return valid ? notifId : null;
+}
+
+pushRouter.post("/ack", async (req, res) => {
+  const { ackToken } = req.body;
+  if (!ackToken || typeof ackToken !== "string") {
+    return res.status(400).json({ error: "ackToken required" });
+  }
+
+  const notifId = verifyAckToken(ackToken);
+  if (!notifId) {
+    return res.status(403).json({ error: "Invalid token" });
+  }
+
+  try {
+    await NotificationLedger.findByIdAndUpdate(notifId, {
+      clicked: true,
+      clickedAt: new Date(),
+    });
+  } catch (err) {
+    console.error("[Push Ack] Failed to update ledger:", err);
+  }
+
+  res.json({ ok: true });
+});
 
 pushRouter.use(requireAuth);
 

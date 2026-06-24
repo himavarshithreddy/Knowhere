@@ -17,7 +17,12 @@ export const config = {
   openRouterKey: process.env.OPENROUTER_KEY ?? "",
   vapidPublicKey: process.env.VAPID_PUBLIC_KEY ?? "",
   vapidPrivateKey: process.env.VAPID_PRIVATE_KEY ?? "",
-  vapidSubject: process.env.VAPID_SUBJECT ?? ""
+  vapidSubject: process.env.VAPID_SUBJECT ?? "",
+  notifCooldownDays: Number(process.env.NOTIF_COOLDOWN_DAYS ?? 5),
+  notifCriticalCooldownDays: Number(process.env.NOTIF_CRITICAL_COOLDOWN_DAYS ?? 2),
+  notifMaxImpressions: Number(process.env.NOTIF_MAX_IMPRESSIONS ?? 5),
+  notifImpressionDecay: Number(process.env.NOTIF_IMPRESSION_DECAY ?? 0.6),
+  notifHibernationDays: Number(process.env.NOTIF_HIBERNATION_DAYS ?? 30),
 };
 
 export const assertAuthConfig = () => {

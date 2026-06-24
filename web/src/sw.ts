@@ -91,7 +91,7 @@ self.addEventListener('push', (event) => {
         badge: '/notification-badge.svg',
         vibrate: [200, 100, 200],
         silent: false,
-        data: { url: data.url || '/' },
+        data: { url: data.url || '/', ackToken: data.ackToken },
         requireInteraction: true // Keeps notification visible until clicked or dismissed
       };
 
@@ -125,21 +125,34 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   const urlToOpen = new URL(event.notification.data.url, self.location.origin).href;
+  const ackToken = event.notification.data.ackToken;
 
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      // If window already open, focus it and navigate
-      for (let i = 0; i < windowClients.length; i++) {
-        const client = windowClients[i];
-        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
-          client.focus();
-          return client.navigate(urlToOpen);
+    Promise.all([
+      // 1. Acknowledge the click (fire-and-forget)
+      ackToken
+        ? fetch('/api/push/ack', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ackToken }),
+          }).catch((err) => console.error('[SW] Failed to ack notification click', err))
+        : Promise.resolve(),
+        
+      // 2. Navigate to the resource
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+        // If window already open, focus it and navigate
+        for (let i = 0; i < windowClients.length; i++) {
+          const client = windowClients[i];
+          if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+            client.focus();
+            return client.navigate(urlToOpen);
+          }
         }
-      }
-      // If no window open, open new one
-      if (self.clients.openWindow) {
-        return self.clients.openWindow(urlToOpen);
-      }
-    })
+        // If no window open, open new one
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(urlToOpen);
+        }
+      })
+    ])
   );
 });
