@@ -48,6 +48,7 @@ async function main() {
   app.use(compression() as never);
   app.use(cors({ origin: config.clientUrl, credentials: true }));
   app.use(express.json({ limit: "2mb" }));
+  app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser() as never);
 
   app.get("/api/health", (_req, res) => res.json({ ok: true, browser: browserMetrics }));
