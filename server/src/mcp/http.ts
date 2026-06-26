@@ -5,21 +5,34 @@ import { mcpContextStorage } from "../middleware/oauthAuth.js";
 
 export const mcpRouter = express.Router();
 
-let transport: SSEServerTransport | null = null;
+// Map to hold active client connections, preventing session hijacking or collisions
+const transports = new Map<string, SSEServerTransport>();
 
-mcpRouter.get("/sse", async (req, res) => {
-  transport = new SSEServerTransport("/mcp/messages", res);
+mcpRouter.get(["/", "/sse"], async (req, res) => {
+  const transport = new SSEServerTransport("/mcp/messages", res);
+  
+  // Track transport by its unique session ID
+  transports.set(transport.sessionId, transport);
+  
+  // Clean up when client disconnects to prevent memory leaks
+  res.on("close", () => {
+    transports.delete(transport.sessionId);
+  });
+
   await mcpContextStorage.run({ req }, async () => {
-    await mcpServer.server.connect(transport!);
+    await mcpServer.server.connect(transport);
   });
 });
 
 mcpRouter.post("/messages", async (req, res) => {
+  const sessionId = req.query.sessionId as string;
+  const transport = transports.get(sessionId);
+
   if (transport) {
     await mcpContextStorage.run({ req }, async () => {
-      await transport!.handlePostMessage(req as any, res as any);
+      await transport.handlePostMessage(req as any, res as any);
     });
   } else {
-    res.status(503).send("SSE transport not initialized");
+    res.status(400).send("Invalid or missing session ID");
   }
 });
