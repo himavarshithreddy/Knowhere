@@ -24,6 +24,7 @@ import { resourcesRouter } from "./routes/resources.js";
 import { statsRouter } from "./routes/stats.js";
 import { vaultRouter } from "./routes/vault.js";
 import { pushRouter } from "./routes/push.js";
+import { oauthRouter } from "./routes/oauth.js";
 import { browserMetrics } from "./services/browser.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -65,6 +66,7 @@ async function main() {
   app.use("/api/account", accountRouter);
   app.use("/api/vault", vaultRouter);
   app.use("/api/push", pushRouter);
+  app.use("/", oauthRouter);
 
   if (config.nodeEnv === "production") {
     const dist = path.join(__dirname, "../../web/dist");

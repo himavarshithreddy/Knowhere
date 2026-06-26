@@ -23,6 +23,10 @@ export const config = {
   notifMaxImpressions: Number(process.env.NOTIF_MAX_IMPRESSIONS ?? 5),
   notifImpressionDecay: Number(process.env.NOTIF_IMPRESSION_DECAY ?? 0.6),
   notifHibernationDays: Number(process.env.NOTIF_HIBERNATION_DAYS ?? 30),
+  embeddingModel: process.env.EMBEDDING_MODEL ?? "google/gemini-embedding-001",
+  mcpPort: Number(process.env.MCP_PORT ?? 3001),
+  mcpResourceUrl: process.env.MCP_RESOURCE_URL ?? "https://mcp.knowhere.app",
+  oauthIssuerUrl: process.env.OAUTH_ISSUER_URL ?? "http://localhost:3000",
 };
 
 export const assertAuthConfig = () => {

@@ -10,7 +10,11 @@
     "dev": "npm run build -w shared && concurrently \"npm run dev -w server\" \"npm run dev -w web\"",
     "build": "npm run build -w shared && npm run build -w server && npm run build -w web",
     "test": "npm run build -w shared && npm run test -w shared && npm run test -w server && npm run test -w web",
-    "start": "npm run build && npm run start -w server"
+    "start": "npm run build && npm run start -w server",
+    "mcp:build-widget": "npm run mcp:build-widget -w server",
+    "mcp:start": "npm run mcp:start -w server",
+    "mcp:dev": "npm run mcp:dev -w server",
+    "mcp:backfill": "npm run mcp:backfill -w server"
   },
   "devDependencies": {
     "concurrently": "^10.0.3",

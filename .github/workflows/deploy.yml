@@ -39,6 +39,7 @@ jobs:
             
             # Zero-downtime reload of the Node.js server
             pm2 reload knowhere
+            pm2 reload knowhere-mcp || pm2 start npm --name "knowhere-mcp" -- run mcp:start
             
             # Save the PM2 process list
             pm2 save

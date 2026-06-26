@@ -61,6 +61,7 @@ const resourceSchema = new Schema({
   userId: { type: String, required: true, index: true },
   ownerId: { type: String, required: true },
   type: { type: String, required: true, enum: ["link", "note", "image", "pdf"] },
+  embedding: { type: [Number], default: null, select: false },
   title: { type: String, default: "" },
   description: { type: String, default: "" },
   aiDescription: { type: String },

@@ -6,6 +6,7 @@ import { Resource, User, InteractionEvent } from "../models/index.js";
 import { deleteStoredFile, saveUploadedFile } from "../services/storage.js";
 import { resourceToApi } from "../utils/serialize.js";
 import { classifyResource } from "../services/classifier.js";
+import { generateResourceEmbedding } from "../services/embedding.js";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -91,8 +92,17 @@ resourcesRouter.post("/", async (req, res) => {
         { _id: resource._id },
         { $set: updatePayload }
       );
+
+      // Generate vector embedding for semantic search
+      const updatedResource = await Resource.findById(resource._id);
+      if (updatedResource) {
+        const embedding = await generateResourceEmbedding(updatedResource);
+        if (embedding) {
+          await Resource.updateOne({ _id: resource._id }, { $set: { embedding } });
+        }
+      }
     } catch (err) {
-      console.error("Background classification failed:", err);
+      console.error("Background classification or embedding failed:", err);
     }
   })();
 
@@ -168,6 +178,16 @@ resourcesRouter.patch("/:id", async (req, res) => {
 
   await resource.save();
   res.json(resourceToApi(resource));
+
+  // Background embedding update if text content changed
+  const textFields = ["title", "description", "categoryId", "url", "noteBody", "tags"];
+  if (textFields.some(key => req.body[key] !== undefined)) {
+    generateResourceEmbedding(resource).then(embedding => {
+      if (embedding) {
+        Resource.updateOne({ _id: resource._id }, { $set: { embedding } }).catch(console.error);
+      }
+    }).catch(console.error);
+  }
 });
 
 resourcesRouter.post("/:id/view", async (req, res) => {
