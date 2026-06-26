@@ -34,7 +34,8 @@ jobs:
             # Install exact dependencies securely and reproducibly
             npm ci
             
-            # Build the project
+            # Build the project with optimized memory limits for low-RAM VPS (utilizing swap)
+            export NODE_OPTIONS="--max-old-space-size=2048"
             npm run build
             
             # Zero-downtime reload of the Node.js server
