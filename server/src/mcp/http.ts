@@ -30,7 +30,7 @@ mcpRouter.post("/messages", async (req, res) => {
 
   if (transport) {
     await mcpContextStorage.run({ req }, async () => {
-      await transport.handlePostMessage(req as any, res as any);
+      await transport.handlePostMessage(req as any, res as any, req.body);
     });
   } else {
     res.status(400).send("Invalid or missing session ID");

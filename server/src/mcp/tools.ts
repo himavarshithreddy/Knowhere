@@ -82,6 +82,7 @@ export const registerTools = () => {
         content: z.string()
       },
       annotations: { readOnlyHint: true },
+      _meta: {},
       // @ts-ignore
       securitySchemes: [{ type: "oauth2", scopes: ["knowhere:read"] }],
     },
@@ -120,6 +121,7 @@ export const registerTools = () => {
         }))
       },
       annotations: { readOnlyHint: true },
+      _meta: {},
       // @ts-ignore
       securitySchemes: [{ type: "oauth2", scopes: ["knowhere:read"] }]
     },
