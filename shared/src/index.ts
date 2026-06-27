@@ -12,7 +12,10 @@ export const metadataSchema = z.object({
   imageUrl: z.string().url().optional(),
   faviconUrl: z.string().url().optional(),
   siteName: z.string().max(200).optional(),
-  author: z.string().max(200).optional()
+  author: z.string().max(200).optional(),
+  caption: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  content: z.string().optional()
 });
 
 export const resourceSchema = z.object({

@@ -411,7 +411,7 @@ export function Library({ mode = "library" }: { mode?: "library" | "favorites" |
           <h2>{query ? `No signals for “${query}”` : showingCategoryResources ? "Nothing in this cluster" : empty[0]}</h2>
           <p>{query ? "Try another frequency or clear the active filters." : showingCategoryResources ? "Log a discovery here to fill this cluster." : empty[1]}</p>
           {mode === "library" && !query && <button className="button primary" onClick={openForm}><Plus /> Log your first discovery</button>}</div>}
-    <button className="global-fab" onClick={openForm} aria-label="Log discovery"><Plus /></button>
+    <button className={`global-fab ${(formOpen || selected) ? "hide-on-mobile" : ""}`} onClick={openForm} aria-label="Log discovery"><Plus /></button>
     <ResourceForm open={formOpen} onClose={closeForm} initialCategory={formCategory} />
     <ResourceDetail resource={selected} categories={categories} onClose={closeDetail} />
   </main>;

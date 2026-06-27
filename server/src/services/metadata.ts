@@ -127,6 +127,8 @@ export async function extractMetadata(rawUrl: string) {
       const result = {
         title: oembed.author_name ? `${oembed.author_name} on X` : "Post on X",
         description: tweetText || undefined,
+        caption: tweetText || undefined,
+        content: tweetText || undefined,
         siteName: "X",
         author: oembed.author_name,
         faviconUrl: `${url.origin}/favicon.ico`
@@ -138,9 +140,34 @@ export async function extractMetadata(rawUrl: string) {
 
   if (isYouTubeUrl(url)) {
     const oembed = await fetchYouTubeOEmbed(url.toString());
+    let description, tags;
+    try {
+      const res = await safeFetch(url.toString(), new AbortController().signal);
+      const html = await res.text();
+      const $ = cheerio.load(html);
+      
+      const match = html.match(/var ytInitialData = (.*?);<\/script>/);
+      if (match) {
+        try {
+          const data = JSON.parse(match[1]);
+          description = data.contents?.twoColumnWatchNextResults?.results?.results?.contents?.[1]?.videoSecondaryInfoRenderer?.attributedDescription?.content;
+        } catch (e) {}
+      }
+      
+      if (!description) {
+        description = $("meta[name='description']").attr("content");
+      }
+      const keywords = $("meta[name='keywords']").attr("content");
+      if (keywords) tags = keywords.split(",").map(k => k.trim()).filter(Boolean);
+    } catch(e) {}
+    
     if (oembed?.title) {
       const result = {
         title: oembed.title,
+        description: description || undefined,
+        caption: description || undefined,
+        content: description || undefined,
+        tags: tags,
         siteName: "YouTube",
         author: oembed.author_name,
         imageUrl: oembed.thumbnail_url,
@@ -160,9 +187,16 @@ export async function extractMetadata(rawUrl: string) {
       if (mlResponse.ok) {
         const mlData = await mlResponse.json() as any;
         if (mlData.status === "success" && mlData.data) {
+          let cleanCaption = mlData.data.description || undefined;
+          if (cleanCaption && typeof cleanCaption === "string") {
+            const match = cleanCaption.match(/.*?: “([^”]+)”/);
+            if (match) cleanCaption = match[1];
+          }
           const result = {
             title: mlData.data.title || "Instagram",
             description: mlData.data.description || undefined,
+            caption: cleanCaption,
+            content: cleanCaption,
             siteName: "Instagram",
             author: mlData.data.author || undefined,
             imageUrl: mlData.data.image?.url || undefined,
@@ -265,9 +299,29 @@ export async function extractMetadata(rawUrl: string) {
     const siteName = content("og:site_name") ?? domainParts[domainParts.length - 2] ?? hostname;
     const siteNameCapitalized = siteName.charAt(0).toUpperCase() + siteName.slice(1);
 
+    const keywords = (content("keywords") || "").split(",").map(k => k.trim()).filter(Boolean);
+    const articleTags: string[] = [];
+    $('meta[property="article:tag"]').each((_, el) => {
+      const t = $(el).attr("content");
+      if (t) articleTags.push(t.trim());
+    });
+    const tags = Array.from(new Set([...keywords, ...articleTags]));
+    
+    let contentText = "";
+    if (isLinkedInPostUrl(url)) {
+      contentText = ($(".update-components-text").text() || $(".feed-shared-update-v2__description").text()).trim();
+    }
+    if (!contentText) {
+      contentText = ($(".notion-page-content").text() || $("article").text() || $("main").text() || $("body").text()).trim();
+    }
+    contentText = contentText.replace(/\s+/g, " ").slice(0, 2000);
+
     const result = {
       title,
       description: description?.trim() || undefined,
+      caption: description?.trim() || undefined,
+      content: contentText || undefined,
+      tags: tags.length > 0 ? tags : undefined,
       imageUrl,
       faviconUrl: absolute($('link[rel~="icon"]').first().attr("href")) ?? `${url.origin}/favicon.ico`,
       siteName: siteNameCapitalized,

@@ -212,7 +212,7 @@ export function Dashboard() {
       <ResourceDetail resource={selected} categories={categories} onClose={closeDetail} />
       
       {formOpen && <ResourceForm open={formOpen} onClose={closeForm} initialCategory={categories.find((c) => c.isDefault)?.id || ""} />}
-      <button className="global-fab" onClick={openForm} aria-label="Log discovery"><Plus /></button>
+      <button className={`global-fab ${(formOpen || selected) ? "hide-on-mobile" : ""}`} onClick={openForm} aria-label="Log discovery"><Plus /></button>
     </main>
   );
 }

@@ -577,6 +577,7 @@ h1,h2,h3,p { margin-top: 0; }
     width: 52px; height: 52px;
   }
   .global-fab svg { width: 22px; height: 22px; }
+  .global-fab.hide-on-mobile { display: none; }
 
   /* ── ResourceForm — full-height bottom sheet with sticky footer ── */
   .dialog-backdrop { padding: 0; align-items: end; }

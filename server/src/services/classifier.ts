@@ -30,6 +30,9 @@ export const classifyResource = async (
     url,
     metadata?.title,
     metadata?.description,
+    metadata?.caption,
+    metadata?.content,
+    metadata?.tags ? `Tags: ${metadata.tags.join(', ')}` : '',
     metadata?.siteName
   ].filter(Boolean).join("\n\n");
 
