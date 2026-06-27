@@ -7,7 +7,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { BrandMark } from "../components/BrandMark";
 import { EnterPageChrome } from "../components/EnterPageChrome";
 const LazyCosmicScene = lazy(() => import("../components/landing/CosmicScene").then(m => ({ default: m.CosmicScene })));
@@ -415,12 +415,18 @@ function EnterAuth({ placement = "hero" }: EnterAuthProps) {
 export function Enter() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     if (user && !loading && appNavigations <= 1) {
-      navigate("/dashboard");
+      const returnTo = searchParams.get("returnTo");
+      if (returnTo) {
+        window.location.href = returnTo;
+      } else {
+        navigate("/dashboard");
+      }
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, searchParams]);
 
   usePageSeo({
     title: SEO.home.title,

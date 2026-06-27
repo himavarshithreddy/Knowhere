@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useLayoutEffect, Suspense, lazy } from "react";
-import { BrowserRouter, NavLink, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, NavLink, Navigate, Outlet, Route, Routes, useLocation, useSearchParams } from "react-router-dom";
 import { BookOpen as BookOpenIcon, Compass as CompassIcon, Heart as HeartIcon, Settings as SettingsGearIcon, Target as TargetIcon } from "lucide-react";
 import { AppLoader } from "./components/AppLoader";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
@@ -50,6 +50,11 @@ function PwaUpdater() {
 
 function PostAuthRedirect() {
   return <Navigate to="/dashboard" replace />;
+}
+
+function LoginRedirect() {
+  const [searchParams] = useSearchParams();
+  return <Navigate to={`/?${searchParams.toString()}`} replace />;
 }
 
 function GuestOnly({ children }: { children: ReactNode }) {
@@ -132,7 +137,7 @@ export default function App() {
           <Suspense fallback={<AppLoader />}>
             <Routes>
               <Route path="/recover" element={<Recover />} />
-              <Route path="/login" element={<Navigate to="/" replace />} />
+              <Route path="/login" element={<LoginRedirect />} />
               <Route path="/welcome" element={<Navigate to="/dashboard" replace />} />
               <Route path="/*" element={<RequireAuth><AppRoutes /></RequireAuth>} />
             </Routes>
