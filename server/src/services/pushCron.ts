@@ -217,4 +217,71 @@ export const startPushCron = () => {
   
   // Run every day at 7:00 PM (19:00)
   cron.schedule("0 19 * * *", runPushJob);
+
+  const runRemindersJob = async () => {
+    try {
+      const now = new Date();
+      const overdueReminders = await Resource.find({
+        remindAt: { $lte: now, $ne: null },
+        deletedAt: null
+      }).populate('ownerId');
+
+      const userIds = [...new Set(overdueReminders.map(r => r.ownerId))];
+      const users = await User.find({ uid: { $in: userIds }, "pushSubscriptions.0": { $exists: true } });
+      const userMap = new Map(users.map(u => [u.uid, u]));
+
+      for (const resource of overdueReminders) {
+        const user = userMap.get(resource.ownerId);
+        if (!user || !user.pushSubscriptions || user.pushSubscriptions.length === 0) continue;
+
+        let ackToken: string | undefined = undefined;
+        try {
+          const ledgerEntry = await NotificationLedger.create({
+            userId: user.uid,
+            resourceId: String(resource._id),
+            tier: "reminder",
+            selectionReason: "user_reminder"
+          });
+          ackToken = signAckToken(String(ledgerEntry._id));
+        } catch (err) {
+          console.error('[pushCron] Failed to record reminder history', { userId: user.uid, err });
+        }
+
+        const title = resource.title || resource.metadata?.title || "Your Reminder";
+        const shortTitle = title.length > 40 ? title.substring(0, 37) + "..." : title;
+
+        const payload = JSON.stringify({
+          title: `Reminder: ${shortTitle}`,
+          body: "It's time to check this out. Tap to open.",
+          url: `/library?resource=${resource._id}`,
+          ...(ackToken ? { ackToken } : {})
+        });
+
+        for (let i = user.pushSubscriptions.length - 1; i >= 0; i--) {
+          const sub = user.pushSubscriptions[i];
+          try {
+            await webpush.sendNotification(
+              { endpoint: sub.endpoint, keys: sub.keys as any },
+              payload,
+              { headers: { Urgency: "high" }, TTL: 86400 }
+            );
+          } catch (err: any) {
+            if (err.statusCode === 410 || err.statusCode === 404) {
+              user.pushSubscriptions.splice(i, 1);
+            }
+          }
+        }
+        
+        await user.save();
+        
+        resource.remindAt = null;
+        await (resource as any).save();
+      }
+    } catch (err) {
+      console.error("[Push Cron] Error running reminders job:", err);
+    }
+  };
+
+  // Run every minute for user set reminders
+  cron.schedule("* * * * *", runRemindersJob);
 };

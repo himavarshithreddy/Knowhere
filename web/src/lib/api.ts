@@ -19,6 +19,8 @@ type ResourceInput = {
   noteBody?: string;
   metadata?: Resource["metadata"];
   locked?: boolean;
+  intentType?: string;
+  remindAt?: string | null;
 };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {

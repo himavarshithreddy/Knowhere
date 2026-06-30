@@ -44,6 +44,7 @@ export const resourceSchema = z.object({
   tags: z.array(z.string()).default([]),
   lastStatusChangeAt: z.string().nullable().default(null),
   targetDate: z.string().nullable().optional().default(null),
+  remindAt: z.string().nullable().optional().default(null),
   milestones: z.array(z.object({
     id: z.string(),
     text: z.string().max(200),

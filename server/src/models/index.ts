@@ -84,6 +84,7 @@ const resourceSchema = new Schema({
   tags: { type: [String], default: [] },
   lastStatusChangeAt: { type: Date, default: null },
   targetDate: { type: Date, default: null },
+  remindAt: { type: Date, default: null },
   milestones: { type: [{ id: String, text: String, completed: { type: Boolean, default: false } }], default: [] },
   deletedAt: { type: Date, default: null }
 }, { timestamps: true });
@@ -94,6 +95,7 @@ resourceSchema.index({ userId: 1, intentType: 1 });
 resourceSchema.index({ userId: 1, actionStatus: 1 });
 resourceSchema.index({ userId: 1, lastViewedAt: 1 });
 resourceSchema.index({ userId: 1, tags: 1 });
+resourceSchema.index({ remindAt: 1 });
 
 export type ResourceDoc = InferSchemaType<typeof resourceSchema> & { _id: mongoose.Types.ObjectId; createdAt: Date; updatedAt: Date };
 export const Resource = mongoose.model("Resource", resourceSchema);

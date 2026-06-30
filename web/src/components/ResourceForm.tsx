@@ -49,6 +49,8 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [intentType, setIntentType] = useState<string>("unclassified");
+  const [reminderMode, setReminderMode] = useState<string>("none");
+  const [customReminderDate, setCustomReminderDate] = useState<string>("");
   const [file, setFile] = useState<File | null>(null);
   const [metadata, setMetadata] = useState<ExtractedMetadata>();
   const [previewStatus, setPreviewStatus] = useState<PreviewStatus>("idle");
@@ -95,6 +97,7 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
       setFile(null); setMetadata(undefined); setPreviewStatus("idle"); setPreviewedUrl("");
       setError(""); setStatus("idle"); setCategoryName(""); setCreatingCategory(false);
       setLocked(false); setShowPinSetup(false); setSetupPin(""); setSetupPinError("");
+      setReminderMode("none"); setCustomReminderDate("");
       previewToken.current += 1;
     }
   }, [open]);
@@ -197,6 +200,23 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
     const enrichMetadataInBackground = type === "link" && Boolean(trimmedUrl) &&
       (previewStatus === "loading" || previewedUrl !== trimmedUrl || previewStatus === "error");
 
+    let finalRemindAt: string | undefined = undefined;
+    if (reminderMode === "custom" && customReminderDate) {
+      finalRemindAt = new Date(customReminderDate).toISOString();
+    } else if (reminderMode !== "none") {
+      const d = new Date();
+      if (reminderMode === "tonight") {
+        d.setHours(22, 0, 0, 0);
+      } else if (reminderMode === "tomorrow") {
+        d.setDate(d.getDate() + 1);
+        d.setHours(11, 0, 0, 0);
+      } else if (reminderMode === "day_after") {
+        d.setDate(d.getDate() + 2);
+        d.setHours(11, 0, 0, 0);
+      }
+      finalRemindAt = d.toISOString();
+    }
+
     setStatus("saving"); setError("");
     try {
       const savedResource = await saveResource({
@@ -209,7 +229,9 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
         file: file ?? undefined,
         metadata: metadataReady ? metadata : undefined,
         enrichMetadataInBackground,
-        locked
+        locked,
+        intentType,
+        remindAt: finalRemindAt
       });
       onClose();
       
@@ -350,6 +372,36 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
                 <option value="knowledge">Knowledge (Reference, Article, etc)</option>
                 <option value="mission">Mission (Project, Idea, Goal)</option>
               </select>
+            </div>
+
+            <div className="field">
+              <label htmlFor="resource-reminder">Remind me in...</label>
+              <select id="resource-reminder" value={reminderMode} onChange={(e) => setReminderMode(e.target.value)}>
+                <option value="none">No reminder</option>
+                <option value="tonight">Tonight (10:00 PM)</option>
+                <option value="tomorrow">Tomorrow (11:00 AM)</option>
+                <option value="day_after">Day After Tomorrow (11:00 AM)</option>
+                <option value="custom">Custom Date & Time</option>
+              </select>
+              {reminderMode === "custom" && (
+                <div style={{ marginTop: "8px" }}>
+                  <input
+                    type="datetime-local"
+                    value={customReminderDate}
+                    onChange={(e) => setCustomReminderDate(e.target.value)}
+                    required
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid var(--border)",
+                      background: "var(--background)",
+                      color: "var(--foreground)",
+                      colorScheme: "dark"
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="field">

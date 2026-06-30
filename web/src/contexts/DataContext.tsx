@@ -7,6 +7,7 @@ type ResourceInput = {
   type: Resource["type"]; title?: string; description: string; categoryId: string;
   url?: string; noteBody?: string; file?: File; metadata?: Resource["metadata"];
   enrichMetadataInBackground?: boolean; locked?: boolean; intentType?: string;
+  remindAt?: string | null;
 };
 type DataState = {
   profile: UserProfile | null; categories: Category[]; resources: Resource[];
@@ -77,7 +78,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       url: input.url,
       noteBody: input.noteBody,
       metadata: input.metadata,
-      locked: input.locked
+      locked: input.locked,
+      intentType: input.intentType,
+      remindAt: input.remindAt
     });
     try {
       let saved = created;

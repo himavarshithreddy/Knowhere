@@ -67,6 +67,7 @@ export const resourceToApi = (doc: ResourceDoc): Resource => ({
   tags: doc.tags,
   lastStatusChangeAt: toIso(doc.lastStatusChangeAt),
   targetDate: toIso((doc as any).targetDate),
+  remindAt: toIso((doc as any).remindAt),
   milestones: ((doc as any).milestones ?? []).map((m: any) => ({ id: m.id || m._id?.toString() || '', text: m.text, completed: m.completed })),
   deletedAt: toIso(doc.deletedAt),
   createdAt: toIso(doc.createdAt)!,

@@ -34,7 +34,7 @@ resourcesRouter.get("/", async (req, res) => {
 });
 
 resourcesRouter.post("/", async (req, res) => {
-  const { type, title, description, categoryId, url, noteBody, metadata, locked, intentType } = req.body;
+  const { type, title, description, categoryId, url, noteBody, metadata, locked, intentType, remindAt } = req.body;
   if (!type || !categoryId) {
     return res.status(400).json({ error: "Add a category." });
   }
@@ -64,6 +64,8 @@ resourcesRouter.post("/", async (req, res) => {
     intentType: intentType && ["mission", "knowledge", "unclassified"].includes(intentType) ? intentType : "unclassified",
     actionStatus: "saved",
     tags: [],
+    targetDate: null,
+    remindAt: remindAt ? new Date(remindAt) : null,
     deletedAt: null
   });
 
@@ -143,7 +145,7 @@ resourcesRouter.patch("/:id", async (req, res) => {
   const resource = await Resource.findOne({ _id: req.params.id, userId: req.auth!.uid });
   if (!resource) return res.status(404).json({ error: "Resource not found." });
 
-  const allowed = ["title", "description", "categoryId", "url", "noteBody", "metadata", "favorite", "archived", "locked", "deletedAt", "intentType", "actionStatus", "tags", "targetDate", "milestones"] as const;
+  const allowed = ["title", "description", "categoryId", "url", "noteBody", "metadata", "favorite", "archived", "locked", "deletedAt", "intentType", "actionStatus", "tags", "targetDate", "remindAt", "milestones"] as const;
   for (const key of allowed) {
     if (req.body[key] !== undefined) {
       if (key === "deletedAt") {
@@ -172,6 +174,7 @@ resourcesRouter.patch("/:id", async (req, res) => {
       else if (key === "intentType") resource.intentType = req.body.intentType;
       else if (key === "tags") resource.tags = req.body.tags;
       else if (key === "targetDate") (resource as any).targetDate = req.body.targetDate ? new Date(req.body.targetDate) : null;
+      else if (key === "remindAt") (resource as any).remindAt = req.body.remindAt ? new Date(req.body.remindAt) : null;
       else if (key === "milestones") (resource as any).milestones = req.body.milestones;
     }
   }

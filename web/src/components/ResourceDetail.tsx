@@ -45,6 +45,17 @@ function DetailEditor({ resource, categories, onClose }: { resource: Resource; c
   const [setupPin, setSetupPin] = useState("");
   const [setupPinError, setSetupPinError] = useState("");
   const [title, setTitle] = useState(resource.title || resourceDisplayTitle(resource));
+  
+  const toLocalISO = (isoString?: string | null) => {
+    if (!isoString) return "";
+    const d = new Date(isoString);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const [reminderMode, setReminderMode] = useState((resource as any).remindAt ? "custom" : "none");
+  const [customReminderDate, setCustomReminderDate] = useState(toLocalISO((resource as any).remindAt));
+  
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -57,7 +68,14 @@ function DetailEditor({ resource, categories, onClose }: { resource: Resource; c
   useEffect(() => {
     setDescription(resource.description ?? "");
     setTitle(resource.title || resourceDisplayTitle(resource));
-  }, [resource.id, resource.description, resource.title]);
+    if ((resource as any).remindAt) {
+      setReminderMode("custom");
+      setCustomReminderDate(toLocalISO((resource as any).remindAt));
+    } else {
+      setReminderMode("none");
+      setCustomReminderDate("");
+    }
+  }, [resource.id, resource.description, resource.title, (resource as any).remindAt]);
 
   useEffect(() => {
     // Record view when opened
@@ -97,6 +115,26 @@ function DetailEditor({ resource, categories, onClose }: { resource: Resource; c
     } catch (e) {
       setSetupPinError(e instanceof Error ? e.message : "Failed to setup Vault.");
     }
+  };
+
+  const handleSetReminder = (mode: string, customDate?: string) => {
+    let finalRemindAt: string | null = null;
+    if (mode === "custom" && customDate) {
+      finalRemindAt = new Date(customDate).toISOString();
+    } else if (mode !== "none") {
+      const d = new Date();
+      if (mode === "tonight") {
+        d.setHours(22, 0, 0, 0);
+      } else if (mode === "tomorrow") {
+        d.setDate(d.getDate() + 1);
+        d.setHours(11, 0, 0, 0);
+      } else if (mode === "day_after") {
+        d.setDate(d.getDate() + 2);
+        d.setHours(11, 0, 0, 0);
+      }
+      finalRemindAt = d.toISOString();
+    }
+    updateResource(resource.id, { remindAt: finalRemindAt });
   };
 
   return <>
@@ -180,6 +218,43 @@ function DetailEditor({ resource, categories, onClose }: { resource: Resource; c
           <option value="archived">Archived</option>
         </select>
       </label>
+    </div>
+
+    <div className="field">
+      <label htmlFor="resource-reminder">Remind me in...</label>
+      <select id="resource-reminder" value={reminderMode} onChange={(e) => {
+        setReminderMode(e.target.value);
+        if (e.target.value !== "custom") {
+          handleSetReminder(e.target.value);
+        }
+      }}>
+        <option value="none">No reminder</option>
+        <option value="tonight">Tonight (10:00 PM)</option>
+        <option value="tomorrow">Tomorrow (11:00 AM)</option>
+        <option value="day_after">Day After Tomorrow (11:00 AM)</option>
+        <option value="custom">Custom Date & Time</option>
+      </select>
+      {reminderMode === "custom" && (
+        <div style={{ marginTop: "8px", display: "flex", gap: "8px" }}>
+          <input
+            type="datetime-local"
+            value={customReminderDate}
+            onChange={(e) => setCustomReminderDate(e.target.value)}
+            style={{
+              flex: 1,
+              padding: "8px 12px",
+              borderRadius: "6px",
+              border: "1px solid var(--border)",
+              background: "var(--background)",
+              color: "var(--foreground)",
+              colorScheme: "dark"
+            }}
+          />
+          <button className="button primary" onClick={() => handleSetReminder("custom", customReminderDate)}>
+            Set
+          </button>
+        </div>
+      )}
     </div>
 
     <div className="detail-menu">
