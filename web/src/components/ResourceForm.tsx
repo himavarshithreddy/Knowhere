@@ -390,15 +390,7 @@ export function ResourceForm({ open, onClose, initialCategory }: Props) {
                     value={customReminderDate}
                     onChange={(e) => setCustomReminderDate(e.target.value)}
                     required
-                    style={{
-                      width: "100%",
-                      padding: "8px 12px",
-                      borderRadius: "6px",
-                      border: "1px solid var(--border)",
-                      background: "var(--background)",
-                      color: "var(--foreground)",
-                      colorScheme: "dark"
-                    }}
+                    placeholder="Select date and time"
                   />
                 </div>
               )}

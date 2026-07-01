@@ -240,15 +240,8 @@ function DetailEditor({ resource, categories, onClose }: { resource: Resource; c
             type="datetime-local"
             value={customReminderDate}
             onChange={(e) => setCustomReminderDate(e.target.value)}
-            style={{
-              flex: 1,
-              padding: "8px 12px",
-              borderRadius: "6px",
-              border: "1px solid var(--border)",
-              background: "var(--background)",
-              color: "var(--foreground)",
-              colorScheme: "dark"
-            }}
+            placeholder="Select date and time"
+            style={{ flex: 1 }}
           />
           <button className="button primary" onClick={() => handleSetReminder("custom", customReminderDate)}>
             Set

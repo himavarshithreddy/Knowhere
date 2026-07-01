@@ -124,7 +124,7 @@ export const api = {
   resetVault: () => request<{ ok: boolean }>("/api/vault/reset", { method: "POST" }),
 
   getVapidPublicKey: () => request<{ publicKey: string }>("/api/push/public-key"),
-  subscribePush: (subscription: PushSubscription) => request<{ ok: boolean }>("/api/push/subscribe", { method: "POST", body: JSON.stringify(subscription) }),
+  subscribePush: (subscription: PushSubscription) => request<{ ok: boolean }>("/api/push/subscribe", { method: "POST", body: JSON.stringify(subscription.toJSON()) }),
   unsubscribePush: (endpoint: string) => request<{ ok: boolean }>("/api/push/unsubscribe", { method: "POST", body: JSON.stringify({ endpoint }) }),
   sendTestPush: () => request<{ ok: boolean; sentCount: number; failCount?: number }>("/api/push/test", { method: "POST" }),
   triggerDailyPush: () => request<{ ok: boolean; sentCount: number; failCount?: number; message?: string }>("/api/push/trigger-daily", { method: "POST" }),
