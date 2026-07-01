@@ -83,17 +83,16 @@ pushRouter.post("/subscribe", async (req, res) => {
     const user = await User.findOne({ uid: req.auth!.uid });
     if (!user) return res.status(404).json({ error: "User not found." });
 
-    // Ensure pushSubscriptions array exists
-    if (!user.pushSubscriptions) {
-      user.pushSubscriptions = [] as any;
-    }
+    // Clean up existing invalid subscriptions and check for duplicate
+    user.pushSubscriptions = (user.pushSubscriptions || []).filter(sub => 
+      sub && sub.endpoint && sub.keys && sub.keys.auth && sub.keys.p256dh
+    ) as any;
 
-    // Check if endpoint already exists to avoid duplicates
     const existing = user.pushSubscriptions.find(sub => sub.endpoint === subscription.endpoint);
     if (!existing) {
       user.pushSubscriptions.push(subscription);
-      await user.save();
     }
+    await user.save();
 
     res.status(201).json({ ok: true });
   } catch (err: any) {
@@ -110,10 +109,11 @@ pushRouter.post("/unsubscribe", async (req, res) => {
     const user = await User.findOne({ uid: req.auth!.uid });
     if (!user) return res.status(404).json({ error: "User not found." });
 
-    if (user.pushSubscriptions) {
-      user.pushSubscriptions = user.pushSubscriptions.filter(sub => sub.endpoint !== endpoint) as any;
-      await user.save();
-    }
+    // Filter out the endpoint and sanitize any invalid entries
+    user.pushSubscriptions = (user.pushSubscriptions || []).filter(sub => 
+      sub && sub.endpoint && sub.endpoint !== endpoint && sub.keys && sub.keys.auth && sub.keys.p256dh
+    ) as any;
+    await user.save();
 
     res.json({ ok: true });
   } catch (err: any) {
@@ -130,6 +130,11 @@ pushRouter.post("/test", async (req, res) => {
       console.error(`[Push Test] User not found for uid: ${req.auth?.uid}`);
       return res.status(404).json({ error: "User not found." });
     }
+
+    // Sanitize in-memory pushSubscriptions before working with them
+    user.pushSubscriptions = (user.pushSubscriptions || []).filter(sub => 
+      sub && sub.endpoint && sub.keys && sub.keys.auth && sub.keys.p256dh
+    ) as any;
 
     console.log(`[Push Test] User found. Subscriptions count: ${user.pushSubscriptions?.length || 0}`);
     if (!user.pushSubscriptions || user.pushSubscriptions.length === 0) {
@@ -166,8 +171,8 @@ pushRouter.post("/test", async (req, res) => {
       }
     }
 
-    if (failCount > 0) {
-      console.log(`[Push Test] Saving user push subscriptions updates after ${failCount} failures...`);
+    if (failCount > 0 || user.isModified("pushSubscriptions")) {
+      console.log(`[Push Test] Saving user push subscriptions updates after ${failCount} failures or sanitization...`);
       await user.save();
     }
 
@@ -186,6 +191,11 @@ pushRouter.post("/trigger-daily", async (req, res) => {
       console.error(`[Push Daily] User not found for uid: ${req.auth?.uid}`);
       return res.status(404).json({ error: "User not found." });
     }
+
+    // Sanitize in-memory pushSubscriptions before working with them
+    user.pushSubscriptions = (user.pushSubscriptions || []).filter(sub => 
+      sub && sub.endpoint && sub.keys && sub.keys.auth && sub.keys.p256dh
+    ) as any;
 
     console.log(`[Push Daily] User found. Subscriptions count: ${user.pushSubscriptions?.length || 0}`);
     if (!user.pushSubscriptions || user.pushSubscriptions.length === 0) {
@@ -226,9 +236,6 @@ pushRouter.post("/trigger-daily", async (req, res) => {
       }
     }
 
-    if (failCount > 0) {
-      console.log(`[Push Daily] Saving user push subscriptions updates after ${failCount} failures...`);
-    }
     await user.save();
     res.json({ ok: true, sentCount, failCount, sentPayloads: toSend });
   } catch (err: any) {
