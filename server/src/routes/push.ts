@@ -73,146 +73,166 @@ pushRouter.get("/public-key", (req, res) => {
 });
 
 pushRouter.post("/subscribe", async (req, res) => {
-  const subscription = req.body;
-  
-  if (!subscription || !subscription.endpoint || !subscription.keys) {
-    return res.status(400).json({ error: "Invalid subscription object." });
+  try {
+    const subscription = req.body;
+    
+    if (!subscription || !subscription.endpoint || !subscription.keys) {
+      return res.status(400).json({ error: "Invalid subscription object." });
+    }
+
+    const user = await User.findOne({ uid: req.auth!.uid });
+    if (!user) return res.status(404).json({ error: "User not found." });
+
+    // Ensure pushSubscriptions array exists
+    if (!user.pushSubscriptions) {
+      user.pushSubscriptions = [] as any;
+    }
+
+    // Check if endpoint already exists to avoid duplicates
+    const existing = user.pushSubscriptions.find(sub => sub.endpoint === subscription.endpoint);
+    if (!existing) {
+      user.pushSubscriptions.push(subscription);
+      await user.save();
+    }
+
+    res.status(201).json({ ok: true });
+  } catch (err: any) {
+    console.error("[Push Subscribe] Error:", err);
+    res.status(500).json({ error: err.message || "Failed to subscribe." });
   }
-
-  const user = await User.findOne({ uid: req.auth!.uid });
-  if (!user) return res.status(404).json({ error: "User not found." });
-
-  // Ensure pushSubscriptions array exists
-  if (!user.pushSubscriptions) {
-    user.pushSubscriptions = [] as any;
-  }
-
-  // Check if endpoint already exists to avoid duplicates
-  const existing = user.pushSubscriptions.find(sub => sub.endpoint === subscription.endpoint);
-  if (!existing) {
-    user.pushSubscriptions.push(subscription);
-    await user.save();
-  }
-
-  res.status(201).json({ ok: true });
 });
 
 pushRouter.post("/unsubscribe", async (req, res) => {
-  const { endpoint } = req.body;
-  if (!endpoint) return res.status(400).json({ error: "Endpoint required." });
+  try {
+    const { endpoint } = req.body;
+    if (!endpoint) return res.status(400).json({ error: "Endpoint required." });
 
-  const user = await User.findOne({ uid: req.auth!.uid });
-  if (!user) return res.status(404).json({ error: "User not found." });
+    const user = await User.findOne({ uid: req.auth!.uid });
+    if (!user) return res.status(404).json({ error: "User not found." });
 
-  if (user.pushSubscriptions) {
-    user.pushSubscriptions = user.pushSubscriptions.filter(sub => sub.endpoint !== endpoint) as any;
-    await user.save();
+    if (user.pushSubscriptions) {
+      user.pushSubscriptions = user.pushSubscriptions.filter(sub => sub.endpoint !== endpoint) as any;
+      await user.save();
+    }
+
+    res.json({ ok: true });
+  } catch (err: any) {
+    console.error("[Push Unsubscribe] Error:", err);
+    res.status(500).json({ error: err.message || "Failed to unsubscribe." });
   }
-
-  res.json({ ok: true });
 });
 
 pushRouter.post("/test", async (req, res) => {
-  console.log(`[Push Test] Received request to trigger test push from user uid: ${req.auth?.uid}`);
-  const user = await User.findOne({ uid: req.auth!.uid });
-  if (!user) {
-    console.error(`[Push Test] User not found for uid: ${req.auth?.uid}`);
-    return res.status(404).json({ error: "User not found." });
-  }
-
-  console.log(`[Push Test] User found. Subscriptions count: ${user.pushSubscriptions?.length || 0}`);
-  if (!user.pushSubscriptions || user.pushSubscriptions.length === 0) {
-    return res.status(400).json({ error: "No active push subscriptions found for this user." });
-  }
-
-  const payload = JSON.stringify({
-    title: "Test Connection",
-    body: "This is a test push notification from Knowhere! It is working successfully.",
-    url: "/dashboard"
-  });
-
-  let sentCount = 0;
-  let failCount = 0;
-
-  for (let i = user.pushSubscriptions.length - 1; i >= 0; i--) {
-    const sub = user.pushSubscriptions[i];
-    console.log(`[Push Test] Sending test push to endpoint: ${sub.endpoint}`);
-    try {
-      await webpush.sendNotification(
-        { endpoint: sub.endpoint, keys: sub.keys as any },
-        payload,
-        { headers: { Urgency: "high" }, TTL: 86400 }
-      );
-      console.log(`[Push Test] Successfully sent test notification to endpoint: ${sub.endpoint}`);
-      sentCount++;
-    } catch (err: any) {
-      console.error(`[Push Test] Failed to send to endpoint ${sub.endpoint}:`, err);
-      failCount++;
-      if (err.statusCode === 410 || err.statusCode === 404) {
-        console.warn(`[Push Test] Subscription expired or gone (status ${err.statusCode}). Removing subscription.`);
-        user.pushSubscriptions.splice(i, 1);
-      }
+  try {
+    console.log(`[Push Test] Received request to trigger test push from user uid: ${req.auth?.uid}`);
+    const user = await User.findOne({ uid: req.auth!.uid });
+    if (!user) {
+      console.error(`[Push Test] User not found for uid: ${req.auth?.uid}`);
+      return res.status(404).json({ error: "User not found." });
     }
-  }
 
-  if (failCount > 0) {
-    console.log(`[Push Test] Saving user push subscriptions updates after ${failCount} failures...`);
-    await user.save();
-  }
+    console.log(`[Push Test] User found. Subscriptions count: ${user.pushSubscriptions?.length || 0}`);
+    if (!user.pushSubscriptions || user.pushSubscriptions.length === 0) {
+      return res.status(400).json({ error: "No active push subscriptions found for this user." });
+    }
 
-  res.json({ ok: true, sentCount, failCount });
-});
+    const payload = JSON.stringify({
+      title: "Test Connection",
+      body: "This is a test push notification from Knowhere! It is working successfully.",
+      url: "/dashboard"
+    });
 
-pushRouter.post("/trigger-daily", async (req, res) => {
-  console.log(`[Push Daily] Received request to trigger daily push from user uid: ${req.auth?.uid}`);
-  const user = await User.findOne({ uid: req.auth!.uid });
-  if (!user) {
-    console.error(`[Push Daily] User not found for uid: ${req.auth?.uid}`);
-    return res.status(404).json({ error: "User not found." });
-  }
+    let sentCount = 0;
+    let failCount = 0;
 
-  console.log(`[Push Daily] User found. Subscriptions count: ${user.pushSubscriptions?.length || 0}`);
-  if (!user.pushSubscriptions || user.pushSubscriptions.length === 0) {
-    return res.status(400).json({ error: "No active push subscriptions found." });
-  }
-
-  console.log(`[Push Daily] Generating recommendations for user: ${user.uid}`);
-  const toSend = await generatePushPayloadsForUser(user.uid);
-  console.log(`[Push Daily] Generated ${toSend.length} recommendations to send:`, JSON.stringify(toSend));
-  
-  if (toSend.length === 0) {
-    return res.json({ ok: true, message: "No recommendations to send.", sentCount: 0 });
-  }
-
-  let sentCount = 0;
-  let failCount = 0;
-  for (const notif of toSend) {
-    const payload = JSON.stringify(notif);
     for (let i = user.pushSubscriptions.length - 1; i >= 0; i--) {
       const sub = user.pushSubscriptions[i];
-      console.log(`[Push Daily] Sending payload to endpoint: ${sub.endpoint}`);
+      console.log(`[Push Test] Sending test push to endpoint: ${sub.endpoint}`);
       try {
         await webpush.sendNotification(
-          { endpoint: sub.endpoint, keys: sub.keys as any }, 
+          { endpoint: sub.endpoint, keys: sub.keys as any },
           payload,
           { headers: { Urgency: "high" }, TTL: 86400 }
         );
-        console.log(`[Push Daily] Successfully sent notification to endpoint: ${sub.endpoint}`);
+        console.log(`[Push Test] Successfully sent test notification to endpoint: ${sub.endpoint}`);
         sentCount++;
       } catch (err: any) {
-        console.error(`[Push Daily] Failed to send notification to endpoint ${sub.endpoint}:`, err);
+        console.error(`[Push Test] Failed to send to endpoint ${sub.endpoint}:`, err);
         failCount++;
         if (err.statusCode === 410 || err.statusCode === 404) {
-          console.warn(`[Push Daily] Subscription expired or gone (status ${err.statusCode}). Removing subscription.`);
+          console.warn(`[Push Test] Subscription expired or gone (status ${err.statusCode}). Removing subscription.`);
           user.pushSubscriptions.splice(i, 1);
         }
       }
     }
-  }
 
-  if (failCount > 0) {
-    console.log(`[Push Daily] Saving user push subscriptions updates after ${failCount} failures...`);
+    if (failCount > 0) {
+      console.log(`[Push Test] Saving user push subscriptions updates after ${failCount} failures...`);
+      await user.save();
+    }
+
+    res.json({ ok: true, sentCount, failCount });
+  } catch (err: any) {
+    console.error("[Push Test] Error:", err);
+    res.status(500).json({ error: err.message || "Failed to trigger test push." });
   }
-  await user.save();
-  res.json({ ok: true, sentCount, failCount, sentPayloads: toSend });
+});
+
+pushRouter.post("/trigger-daily", async (req, res) => {
+  try {
+    console.log(`[Push Daily] Received request to trigger daily push from user uid: ${req.auth?.uid}`);
+    const user = await User.findOne({ uid: req.auth!.uid });
+    if (!user) {
+      console.error(`[Push Daily] User not found for uid: ${req.auth?.uid}`);
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    console.log(`[Push Daily] User found. Subscriptions count: ${user.pushSubscriptions?.length || 0}`);
+    if (!user.pushSubscriptions || user.pushSubscriptions.length === 0) {
+      return res.status(400).json({ error: "No active push subscriptions found." });
+    }
+
+    console.log(`[Push Daily] Generating recommendations for user: ${user.uid}`);
+    const toSend = await generatePushPayloadsForUser(user.uid);
+    console.log(`[Push Daily] Generated ${toSend.length} recommendations to send:`, JSON.stringify(toSend));
+    
+    if (toSend.length === 0) {
+      return res.json({ ok: true, message: "No recommendations to send.", sentCount: 0 });
+    }
+
+    let sentCount = 0;
+    let failCount = 0;
+    for (const notif of toSend) {
+      const payload = JSON.stringify(notif);
+      for (let i = user.pushSubscriptions.length - 1; i >= 0; i--) {
+        const sub = user.pushSubscriptions[i];
+        console.log(`[Push Daily] Sending payload to endpoint: ${sub.endpoint}`);
+        try {
+          await webpush.sendNotification(
+            { endpoint: sub.endpoint, keys: sub.keys as any }, 
+            payload,
+            { headers: { Urgency: "high" }, TTL: 86400 }
+          );
+          console.log(`[Push Daily] Successfully sent notification to endpoint: ${sub.endpoint}`);
+          sentCount++;
+        } catch (err: any) {
+          console.error(`[Push Daily] Failed to send notification to endpoint ${sub.endpoint}:`, err);
+          failCount++;
+          if (err.statusCode === 410 || err.statusCode === 404) {
+            console.warn(`[Push Daily] Subscription expired or gone (status ${err.statusCode}). Removing subscription.`);
+            user.pushSubscriptions.splice(i, 1);
+          }
+        }
+      }
+    }
+
+    if (failCount > 0) {
+      console.log(`[Push Daily] Saving user push subscriptions updates after ${failCount} failures...`);
+    }
+    await user.save();
+    res.json({ ok: true, sentCount, failCount, sentPayloads: toSend });
+  } catch (err: any) {
+    console.error("[Push Daily] Error:", err);
+    res.status(500).json({ error: err.message || "Failed to trigger daily push." });
+  }
 });
