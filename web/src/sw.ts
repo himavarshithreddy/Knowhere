@@ -85,11 +85,16 @@ self.addEventListener('push', (event) => {
       }
       
       const title = data.title || 'Knowhere';
+      const isReminder = title.toLowerCase().includes('reminder');
+      
+      const iconPath = `${self.location.origin}/push-icon.svg`;
+      const badgePath = `${self.location.origin}/notification-badge.svg`;
+
       const notifTag = `knowhere-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       const options = {
         body: data.body || '',
-        icon: '/pwa-192x192.png',
-        badge: '/notification-badge.svg',
+        icon: iconPath,
+        badge: badgePath,
         tag: notifTag,
         renotify: true,
         timestamp: Date.now(),

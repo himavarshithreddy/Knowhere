@@ -12,6 +12,7 @@ import { StatusProgression } from "./StatusProgression";
 import { MilestoneChecklist } from "./MilestoneChecklist";
 import { resourceDisplayTitle } from "../lib/utils";
 import { api } from "../lib/api";
+import { useToast } from "../contexts/ToastContext";
 
 const DetailMedia = memo(function DetailMedia({ resource }: { resource: Resource }) {
   return <DetailMediaPreview resource={resource} />;
@@ -117,7 +118,9 @@ function DetailEditor({ resource, categories, onClose }: { resource: Resource; c
     }
   };
 
-  const handleSetReminder = (mode: string, customDate?: string) => {
+  const { addToast } = useToast();
+
+  const handleSetReminder = async (mode: string, customDate?: string) => {
     let finalRemindAt: string | null = null;
     if (mode === "custom" && customDate) {
       finalRemindAt = new Date(customDate).toISOString();
@@ -134,7 +137,19 @@ function DetailEditor({ resource, categories, onClose }: { resource: Resource; c
       }
       finalRemindAt = d.toISOString();
     }
-    updateResource(resource.id, { remindAt: finalRemindAt });
+    try {
+      await updateResource(resource.id, { remindAt: finalRemindAt });
+      addToast({
+        message: finalRemindAt ? "Reminder set successfully." : "Reminder cleared.",
+        type: "success"
+      });
+    } catch (err) {
+      console.error(err);
+      addToast({
+        message: "Failed to set reminder.",
+        type: "error"
+      });
+    }
   };
 
   return <>
